@@ -142,8 +142,8 @@ cisTopicObject <- runWarpLDAModels(cisTopicObject, topic=c(4:18), seed=123, nCor
 #cisTopicObject <- runModels(cisTopicObject, topic=c(2,4,6,8), seed=123, nCores=20, addModels=FALSE)
 
 pdf(PDF.name, height=10, width=15)
-#cisTopicObject <- selectModel(cisTopicObject, type='perplexity')
-cisTopicObject <- selectModel(cisTopicObject)
+cisTopicObject <- selectModel(cisTopicObject, type='perplexity')
+#¤cisTopicObject <- selectModel(cisTopicObject)
 
 
 
@@ -222,6 +222,15 @@ figficaSHER2SansNA + geom_point(aes(colour = factor(HER2.Final.Status)), size = 
 ######################################################
 #####Umap and further cisTopic
 ######################################################
+###Remove warnings
+oldw <- getOption("warn")
+options(warn = -1)
+####Warning message:
+#failed creating initial embedding; using random embedding instead
+
+
+
+
 cisTopicObject <- runUmap(cisTopicObject, target ='cell')
 cellTopicHeatmap(cisTopicObject, col.low="blue", col.mid="white",col.high="red", colorBy=c("PAM50","ER.Status","PAM50_genefu","PR.Status","HER2.Final.Status"))
 cellTopicHeatmap(cisTopicObject, method = "Probability",col.low="blue", col.mid="white",col.high="red", colorBy=c("PAM50","ER.Status","PAM50_genefu","PR.Status","HER2.Final.Status"))
@@ -349,6 +358,10 @@ plotFeatures(cisTopicObject, method='Umap', target='region', topic_contr='NormTo
 
 
 dev.off()
+
+###Restore warnings
+options(warn = oldw)
+
 
 #### Write out topic assignments to the patients
 write.csv(cisTopicObject@selected.model$document_expects, file=snakemake@output[[3]])
