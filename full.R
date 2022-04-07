@@ -47,7 +47,7 @@ methTable <- methTable$imputations[[1]]
 methTable2 <- methTable[,-1]
 rownames(methTable2) <- methTable[,1]
 
-write.csv(methTable2, file=snakemake@output[[1]])
+
 #############PrepMeta###############
 
 samplemeta <- read.table(snakemake@input[["premeta"]], header=TRUE, sep="\t")
@@ -129,9 +129,11 @@ rm(metaSD)
 suppressWarnings(library("cisTopic"))
 
 #Name the PDF after what cancer type and TF:
-PDF.name <- snakemake@output[[2]]
+PDF.name <- snakemake@output[[1]]
+write.csv(methTable2, file=snakemake@output[["methtable"]])
+#write.csv(methTable2, file="/storage/mathelierarea/processed/petear/analysis/test/methtable.csv")
 
-#Removing NAs by deletion: (CHECK IF SHOULD USE AMPUTATION!!!
+#If removing NAs by deletion: (CHECK IF SHOULD USE AMPUTATION!!!
 #cpg <- CpG.sample.tab[complete.cases(CpG.sample.tab), ]
 
 cisTopicObject <- createcisTopicObject(is.acc=0.5, min.cells=0, min.regions=0, count.matrix=data.frame(methTable2)) #Set is.acc=0 or is.acc=0.01 | min.cells=0, min.regions=0
@@ -237,9 +239,8 @@ cellTopicHeatmap(cisTopicObject, method = "Probability",col.low="blue", col.mid=
 
 
 
-plot(NA, xlim=c(0,5), ylim=c(0,5), bty='n',
-     xaxt='n', yaxt='n', xlab='', ylab='')
-text(1,4,"regionScore by NormTop", pos=4)
+plot.new()
+mtext("regionScore by NormTop")
 
 
 cisTopicObject <- getRegionsScores(cisTopicObject, method='NormTop', scale=TRUE)
@@ -259,9 +260,8 @@ ontologyDotPlot(cisTopicObject, top=5, var.y='name', order.by='Binom_Adjp_BH')
 cisTopicObject <- runUmap(cisTopicObject, target="cell", n_components=3)
 plotFeatures(cisTopicObject, method='Umap', target='cell', topic_contr=NULL, colorBy=c("PAM50","ER.Status","PAM50_genefu","PR.Status","HER2.Final.Status"), cex.legend = 0.8, factor.max=.75, dim=3, legend=FALSE, cex.dot = 1.5)
 
-plot(NA, xlim=c(0,5), ylim=c(0,5), bty='n',
-     xaxt='n', yaxt='n', xlab='', ylab='')
-text(1,4,"Region by probability (by NormTop)", pos=4)
+plot.new()
+mtext("Region by probability (by NormTop)")
 
 cisTopicObject <- runUmap(cisTopicObject, target ='region')
 
@@ -271,9 +271,8 @@ cisTopicObject <- runUmap(cisTopicObject, target ='region', n_components=3)
 
 plotFeatures(cisTopicObject, method='Umap', target='region', topic_contr='Probability', colorBy=NULL, cex.legend = 0.8, factor.max=.75, dim=3, legend=FALSE, col.low='blue', col.mid='white', col.high='red', cex.dot = 1.5)
 
-plot(NA, xlim=c(0,5), ylim=c(0,5), bty='n',
-     xaxt='n', yaxt='n', xlab='', ylab='')
-text(1,4,"Region by Z-score (by NormTop)", pos=4)
+plot.new()
+mtext("Region by Z-score (by NormTop)")
 
 cisTopicObject <- runUmap(cisTopicObject, target ='region')
 
@@ -284,9 +283,8 @@ cisTopicObject <- runUmap(cisTopicObject, target ='region', n_components=3)
 plotFeatures(cisTopicObject, method='Umap', target='region', topic_contr='Z-score', colorBy=NULL, cex.legend = 0.8, factor.max=.75, dim=3, legend=FALSE, col.low='blue', col.mid='white', col.high='red', cex.dot = 1.5)
 
 
-plot(NA, xlim=c(0,5), ylim=c(0,5), bty='n',
-     xaxt='n', yaxt='n', xlab='', ylab='')
-text(1,4,"Region by NormTop (by NormTop)", pos=4)
+plot.new()
+mtext("Region by NormTop (by NormTop)")
 
 cisTopicObject <- runUmap(cisTopicObject, target ='region')
 
@@ -298,9 +296,8 @@ plotFeatures(cisTopicObject, method='Umap', target='region', topic_contr='NormTo
 
 
 ######################################################
-plot(NA, xlim=c(0,5), ylim=c(0,5), bty='n',
-     xaxt='n', yaxt='n', xlab='', ylab='')
-text(1,4,"regionScore by probability", pos=4)
+plot.new()
+mtext("regionScore by probability")
 
 cisTopicObject <- getRegionsScores(cisTopicObject, method='Probability', scale=TRUE)
 #par(mfrow=c(3,5))
@@ -320,9 +317,8 @@ ontologyDotPlot(cisTopicObject, top=5, var.y='name', order.by='Binom_Adjp_BH')
 cisTopicObject <- runUmap(cisTopicObject, target="cell", n_components=3)
 plotFeatures(cisTopicObject, method='Umap', target='cell', topic_contr=NULL, colorBy=c("PAM50","ER.Status","PAM50_genefu","PR.Status","HER2.Final.Status"), cex.legend = 0.8, factor.max=.75, dim=3, legend=FALSE, cex.dot = 1.5)
 
-plot(NA, xlim=c(0,5), ylim=c(0,5), bty='n',
-     xaxt='n', yaxt='n', xlab='', ylab='')
-text(1,4,"Region by probability (by probability)", pos=4)
+plot.new()
+mtext("Region by probability (by probability)")
 
 cisTopicObject <- runUmap(cisTopicObject, target ='region')
 
@@ -332,9 +328,8 @@ cisTopicObject <- runUmap(cisTopicObject, target ='region', n_components=3)
 
 plotFeatures(cisTopicObject, method='Umap', target='region', topic_contr='Probability', colorBy=NULL, cex.legend = 0.8, factor.max=.75, dim=3, legend=FALSE, col.low='blue', col.mid='white', col.high='red', cex.dot = 1.5)
 
-plot(NA, xlim=c(0,5), ylim=c(0,5), bty='n',
-     xaxt='n', yaxt='n', xlab='', ylab='')
-text(1,4,"Region by Z-score (by probability)", pos=4)
+plot.new()
+mtext("Region by Z-score (by probability)")
 
 cisTopicObject <- runUmap(cisTopicObject, target ='region')
 
@@ -344,9 +339,8 @@ cisTopicObject <- runUmap(cisTopicObject, target ='region', n_components=3)
 
 plotFeatures(cisTopicObject, method='Umap', target='region', topic_contr='Z-score', colorBy=NULL, cex.legend = 0.8, factor.max=.75, dim=3, legend=FALSE, col.low='blue', col.mid='white', col.high='red', cex.dot = 1.5)
 
-plot(NA, xlim=c(0,5), ylim=c(0,5), bty='n',
-     xaxt='n', yaxt='n', xlab='', ylab='')
-text(1,4,"Region by NormTop (by probability)", pos=4)
+plot.new()
+mtext("Region by NormTop (by probability)")
 
 cisTopicObject <- runUmap(cisTopicObject, target ='region')
 
@@ -364,30 +358,20 @@ options(warn = oldw)
 
 
 #### Write out topic assignments to the patients
-write.csv(cisTopicObject@selected.model$document_expects, file=snakemake@output[[3]])
+write.csv(cisTopicObject@selected.model$document_expects, file=snakemake@output[["topicAssigToPatient"]])
+#write.csv(cisTopicObject@selected.model$document_expects, file="/storage/mathelierarea/processed/petear/analysis/test/topicAssigToPatient.csv")
 
 #### Region scores per topic (normalized umap)
-write.csv(cisTopicObject@region.data, file=snakemake@output[[4]])
+write.csv(cisTopicObject@region.data, file=snakemake@output[["RegScrPrtopic"]])
+#write.csv(cisTopicObject@region.data, file="/storage/mathelierarea/processed/petear/analysis/test/RegScrPrtopic.csv")
 
 #### Unnormalized region assignments
-write.csv(cisTopicObject@selected.model$topics, file=snakemake@output[[5]])
-
-#cisTopicObject <- runUmap(cisTopicObject, target="cell", n_components=2)
-#### UmapRegScore
-#write.csv(cisTopicObject@dr$region, file=snakemake@output[[6]])
-
-#### UmapPatScore
-#write.csv(cisTopicObject@dr$cell, file=snakemake@output[[7]])
+write.csv(cisTopicObject@selected.model$topics, file=snakemake@output[["RegAssigUnormal"]])
+#write.csv(cisTopicObject@selected.model$topics, file="/storage/mathelierarea/processed/petear/analysis/test/RegAssigUnormal.csv")
 
 
-saveRDS(cisTopicObject, file=snakemake@output[[6]])
-
-#Not needed
-#write.csv(fica, file=snakemake@output[[7]])
-
-#getBedFiles(cisTopicObject, path='CisTopicBed_BRCA_SNA')
- 
-write.csv(meta, file=snakemake@output[[7]])
+saveRDS(cisTopicObject, file=snakemake@output[["cto"]])
+#saveRDS(cisTopicObject, file="/storage/mathelierarea/processed/petear/analysis/test/cto.rds")
 
 #Create empty dataframe:
 df <- data.frame(matrix(ncol=2, nrow=1))
@@ -402,6 +386,8 @@ for (attr in attributes(cisTopicObject@binarized.cisTopics)$names)
 }
 df$TopicX <- NULL
 
-write.csv(df@binarized.cisTopics, file=snakemake@output[[7]])
+write.csv(df@binarized.cisTopics, file=snakemake@output[["bina"]])
+#write.csv(df@binarized.cisTopics, file="/storage/mathelierarea/processed/petear/analysis/test/bina.csv")
 
-write.csv(meta, file=snakemake@output[[8]])
+write.csv(meta, file=snakemake@output[["meta"]])
+#write.csv(meta, file="/storage/mathelierarea/processed/petear/analysis/test/meta.csv")
