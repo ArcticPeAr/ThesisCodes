@@ -51,13 +51,15 @@ rule FromRawToCis:
         premeta = "/storage/mathelierarea/processed/petear/SnakemakeInputFiles/Meta/sampleinfo_TCGA_RNA_seq_cluster.txt"
     output:
         "/storage/mathelierarea/processed/petear/analysis/{project}/{project}_{tfactor}.pdf",
-        methtable = "/storage/mathelierarea/processed/petear/analysis/{project}/MethylTable_{project}_{tfactor}.csv",
+        "/storage/mathelierarea/processed/petear/analysis/{project}/MethylTable_{project}_{tfactor}.csv.xz",
         topicAssigToPatient = "/storage/mathelierarea/processed/petear/analysis/{project}/topicAssigToPatient_{project}_{tfactor}.csv",
         RegScrPrtopic = "/storage/mathelierarea/processed/petear/analysis/{project}/RegScrPrtopic_{project}_{tfactor}.csv",
         RegAssigUnormal = "/storage/mathelierarea/processed/petear/analysis/{project}/RegAssigUnormal_{project}_{tfactor}.csv",
         cto = "/storage/mathelierarea/processed/petear/analysis/{project}/CTO_{project}_{tfactor}.rds",
         bina = "/storage/mathelierarea/processed/petear/analysis/{project}/bina_{project}_{tfactor}.csv",
-        meta = "/storage/mathelierarea/processed/petear/analysis/{project}/meta_{project}_{tfactor}.csv
+        meta = "/storage/mathelierarea/processed/petear/analysis/{project}/meta_{project}_{tfactor}.csv,
+        hmat = "/storage/mathelierarea/processed/petear/analysis/{project}/hmat_{project}_{tfactor}.csv",
+        ClusterDF = "/storage/mathelierarea/processed/petear/analysis/{project}/ClusterDF_{project}_{tfactor}.csv"
     priority:
         100
     script:

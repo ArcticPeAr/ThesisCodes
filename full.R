@@ -130,8 +130,8 @@ suppressWarnings(library("cisTopic"))
 
 #Name the PDF after what cancer type and TF:
 PDF.name <- snakemake@output[[1]]
-write.csv(methTable2, file=snakemake@output[["methtable"]])
-#write.csv(methTable2, file="/storage/mathelierarea/processed/petear/analysis/test/methtable.csv")
+write.csv(methTable2, file=gzfile(snakemake@output[[2]]))
+#write.csv(methTable2, file=gzfile("/storage/mathelierarea/processed/petear/analysis/test/methtable.csv.xz"))
 
 #If removing NAs by deletion: (CHECK IF SHOULD USE AMPUTATION!!!
 #cpg <- CpG.sample.tab[complete.cases(CpG.sample.tab), ]
@@ -386,8 +386,45 @@ for (attr in attributes(cisTopicObject@binarized.cisTopics)$names)
 }
 df$TopicX <- NULL
 
-write.csv(df@binarized.cisTopics, file=snakemake@output[["bina"]])
-#write.csv(df@binarized.cisTopics, file="/storage/mathelierarea/processed/petear/analysis/test/bina.csv")
+write.csv(df, file=snakemake@output[["bina"]])
+#write.csv(df, file="/storage/mathelierarea/processed/petear/analysis/test/bina.csv")
 
 write.csv(meta, file=snakemake@output[["meta"]])
 #write.csv(meta, file="/storage/mathelierarea/processed/petear/analysis/test/meta.csv")
+
+# make a matrix with hierarchical clustering as cistopicheatmap :
+hmat <- cisTopicObject@selected.model$document_expects
+
+#make rownames as cistopic gives topic number as rowname (E.g. topic 1 is the first row)
+row.names(hmat) <- 1 : nrow(hmat)
+
+
+rowOrder <- hclust(dist(hmat))$order
+colOrder <- hclust(dist(t(hmat)))$order
+
+hmat <- hmat[rowOrder, colOrder]
+write.csv(hmat, file=snakemake@output[["hmat"]])
+#write.csv(hmat, file="/storage/mathelierarea/processed/petear/analysis/test/hmat.csv")
+
+
+#####get which cluster each patient belong to with help from guidohooiveld on Github #####
+
+thamat = t(hmat)                #Transpose hmat because complexHeatmaps k-means clustering (which I have to use for getting cluster assignments) only works on rows.
+
+HM <- Heatmap(thamat, km=4)     #Draw a heatmap with km clusters.
+HM <- draw(HM)                  #Show the heatmap
+r.dend <- row_dend(HM)
+rcl.list <- row_order(HM)
+
+library(magrittr)           #Probably not needed            
+
+ClusterDF <- lapply(names(rcl.list), function(i){
+out <- data.frame(Patient = rownames(thamat[rcl.list[[i]],]),
+                  Cluster = paste0("Cluster ", i),
+                  stringsAsFactors = FALSE)
+return(out)
+}) %>%  
+do.call(rbind, .)
+
+write.csv(ClusterDF, file=snakemake@output[["ClusterDF"]])
+#write.csv(ClusterDF, file="/storage/mathelierarea/processed/petear/analysis/test/ClusterDF.csv")
