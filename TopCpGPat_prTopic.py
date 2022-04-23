@@ -17,20 +17,23 @@ import numpy as np
 
 ####Read tables#######################
 """
-methTable = pd.read_csv("/storage/mathelierarea/processed/petear/analysis/MethylTable_BRCA-US_FULL.csv.xz", delimiter=",", compression="xz")
-regAssigUnormal = pd.read_csv("/storage/mathelierarea/processed/petear/analysis/RegAssigUnormal_BRCA-US_FULL.csv", delimiter=",")
-regScrPrtopic = pd.read_csv("/storage/mathelierarea/processed/petear/analysis/RegScrPrtopic_BRCA-US_FULL.csv", delimiter=",")
-topicAssigToPatient = pd.read_csv("/storage/mathelierarea/processed/petear/analysis/topicAssigToPatient_BRCA-US_FULL.csv", delimiter=",")
-bina = pd.read_csv("/storage/mathelierarea/processed/petear/analysis/binarized.csv", delimiter=",")
+methTable = pd.read_csv("/storage/mathelierarea/processed/petear/analysis/test/methtable.csv.xz", delimiter=",", compression="gzip")
+regAssigUnormal = pd.read_csv("/storage/mathelierarea/processed/petear/analysis/test/RegAssigUnormal.csv", delimiter=",")
+regScrPrtopic = pd.read_csv("/storage/mathelierarea/processed/petear/analysis/test/RegScrPrtopic.csv", delimiter=",")
+topicAssigToPatient = pd.read_csv("/storage/mathelierarea/processed/petear/analysis/test/topicAssigToPatient.csv", delimiter=",")
+bina = pd.read_csv("/storage/mathelierarea/processed/petear/analysis//test/bina.csv", delimiter=",")
 meta = pd.read_csv("/storage/mathelierarea/processed/petear/analysis/test/meta.csv", delimiter=",")
+hmat = pd.read_csv("/storage/mathelierarea/processed/petear/analysis/test/hmat.csv", delimiter=",")
 """
-methTable = pd.read_csv(snakemake.input[methTab], delimiter=",", compression="xz")
+methTable = pd.read_csv(snakemake.input[methTab], delimiter=",", compression="gzip")
 regScrPrtopic = pd.read_csv(snakemake.input[regScrNorm], delimiter=",")
 regAssigUnormal = pd.read_csv(snakemake.input[regScrUnrm], delimiter=",")
 topicAssigToPatient = pd.read_csv(snakemake.input[topicAssig], delimiter=",")
 bina = pd.read_csv(snakemake.input[bina] delimiter=",")
 meta = pd.read_csv(snakemake.input[methTab], delimiter=",")
+hmat = pd.read_csv(snakemake.input[hmat], delimiter=",")
 ####################################
+
 
 #assign patients to topics, and topics to CpGs, so you can go from patients to CpGs
 methTabWithRegAsRowname = methTable
@@ -60,6 +63,37 @@ topicAsPatRownames.index.names = [None]
 
 topAssigPatT = topicAsPatRownames.T
 
+#Create a dict with with topics as key and donors' probabilites for belonging to that topic as values, but only values after a cutoff of median absolute deviation + median of that c
+topicDict={}
+for column in topAssigPatT:
+    colMad = topAssigPatT[column].mad(axis=0)
+    colMedian = topAssigPatT[column].median(axis=0)
+    cutOff = colMad+colMedian
+    maxMin = topAssigPatT[column].max(axis=0) - topAssigPatT[column].min(axis=0)
+    colMean = topAssigPatT[column].mean(axis=0)
+    highInsurance = maxMin - 1.5*colMean 
+    Q1 = topAssigPatT[column].quantile(0.25)
+    Q3 = topAssigPatT[column].quantile(0.75)
+    IQR = Q3 - Q1
+    print(f"{column}: {IQR}")
+    if highInsurance < 0:
+        topicDict[column] = topAssigPatT[column][topAssigPatT[column]>cutOff]
+
+#function to find CpGs with similar values in each topic in topAssigPatTx
+
+
+  
+
+#Virker men må se om dette stemmer med det som sees i heatmap
+
+
+
+
+
+for key, value in topicDict.items():
+    print(key)
+
+   
 
 #topicAsPatRownames["MaxMin"] = np.ptp(topicAsPatRownames.values, axis=1)
 
@@ -83,7 +117,13 @@ bina = bina.drop("Unnamed: 0", axis=1)
 bina = bina.set_index("chrPos")
 bina.dropna(axis = 0, how = 'all', inplace = True)
 
-binaDict ={col : bina[bina[col].notnull()].index.tolist() for col in bina.columns}
+    binaDict = {col : bina[bina[col].notnull()].index.tolist() for col in bina.columns}
+
+#find number of values per key
+nr_vals_binaDict = {key : len(value) for key, value in binaDict.items()}
+
+for key, value in topicDict.items():
+    print(key)
 
 
 """
@@ -129,6 +169,7 @@ df.to_csv("py_df.tsv", sep="\t")
 """
 
 
+
 """
 Because 'df' is very large I will attempt to reduce the size here by removing rows with low difference in values
 """
@@ -147,3 +188,20 @@ Min = 0.3
 Max = 1 
 df = df[df["MaxMin"].between(Min, Max)]
 
+"""
+hmat is the matrix, topAss
+"""     
+hmat["Unnamed: 0"] = "Topic" + hmat["Unnamed: 0"].astype(str)
+
+
+hmat = hmat.set_index("Unnamed: 0")
+hmat.index.names = [None]
+
+for column, row in hmat.iterrows():
+    print(row)
+    hmgrouped = hmat.groupby(np.ceil(hmat[column] * 100) // 10).mean()    
+#group each row by similar values
+
+
+maxVal = hmat.max().max()
+minVal = hmat.min().min() 
