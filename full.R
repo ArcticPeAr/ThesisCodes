@@ -428,3 +428,32 @@ do.call(rbind, .)
 
 write.csv(ClusterDF, file=snakemake@output[["ClusterDF"]])
 #write.csv(ClusterDF, file="/storage/mathelierarea/processed/petear/analysis/test/ClusterDF.csv")
+
+
+####Cutree###   
+#Cutree on colorder since they are the Donors
+
+#hmat <- cisTopicObject@selected.model$document_expects
+
+#z-score the hmat:
+hmat <- scale(cisTopicObject@selected.model$document_expects, center=TRUE, scale=TRUE)
+
+#make rownames as cistopic gives topic number as rowname (E.g. topic 1 is the first row)
+row.names(hmat) <- 1 : nrow(hmat)
+
+
+rowOrder <- hclust(dist(hmat))$order
+colOrder <- cutree(hclust(dist(t(hmat))))
+
+hmat <- hmat[rowOrder, colOrder]
+
+thamat = t(hmat)                #Transpose hmat because complexHeatmaps k-means clustering (which I have to use for getting cluster assignments) only works on rows.
+
+pdf("hmClus5.pdf", height=15, width=10)
+
+HM <- Heatmap(thamat)     #Draw a heatmap with km clusters.
+HM <- draw(HM)                  #Show the heatmap
+r.dend <- row_dend(HM)
+rcl.list <- row_order(HM)
+dev.off()
+
