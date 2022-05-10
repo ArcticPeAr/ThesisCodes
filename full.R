@@ -455,5 +455,7 @@ HM <- Heatmap(thamat)     #Draw a heatmap with km clusters.
 HM <- draw(HM)                  #Show the heatmap
 r.dend <- row_dend(HM)
 rcl.list <- row_order(HM)
+
+
 dev.off()
 
