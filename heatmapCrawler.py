@@ -139,7 +139,7 @@ for clusKey, clusVal in clusterDict.items():
                 val_2 = df.iloc[o][column]
                 keyIndex1 = df.index[n]
                 keyIndex2 = df.index[o]
-                key = (f"{clusKey}_col{column}_{keyIndex1}-{keyIndex2}")
+                key = (f"col{column}_{keyIndex1}-{keyIndex2}")
                 var = st.variance([val_1, val_2])
                 nnDictFull[key] = var
                 nnDictColCluster[key] = var
