@@ -4,6 +4,7 @@ import statistics as st
 import itertools
 import scipy as sp
 from collections import defaultdict
+import math     #for sqrt
 
 ###READING IN THE DATA####
 hmat = pd.read_csv(snakemake.input[hmat], delimiter=",")
@@ -126,7 +127,7 @@ for clusKey, clusVal in clusterDict.items():
     df = thmat.loc[clusVal] 
     m = len(df)
     nnList = []
-    
+    nnDictClusKey = {}
     for column in df.columns[:-1]:
         nnDictColCluster = {}
         varList = []
@@ -139,19 +140,89 @@ for clusKey, clusVal in clusterDict.items():
                 val_2 = df.iloc[o][column]
                 keyIndex1 = df.index[n]
                 keyIndex2 = df.index[o]
-                key = (f"col{column}_{keyIndex1}-{keyIndex2}")
+                key = (f"{keyIndex1}")
                 var = st.variance([val_1, val_2])
                 nnDictFull[key] = var
                 nnDictColCluster[key] = var
         minVarValCluster = min(nnDictColCluster, key=nnDictFull.get)
-        nnList.append(minVarValCluster)
+        nnList.append(minVarValCluster)  
         nnDictClusKey[clusKey] = nnList
     #the part where I crawl over the values:
-    
-        
+    for donoKey, donoVal in nnDictClusKey.items():
+        for element in donoVal:
+            var1 = st.variance(df.iloc[n][column]), df.iloc[n+1][column]) 
+            var2 = var1 
+            while var1 <= var2
+                
+"""
+Because variation will continously decrease as long as the new value is under sqrt(1+(1/n)) * stdev ,  from the mean. So negative if: sqrt(1+1/n) ⋅ stdev  > x > mean  
+"""
+def varLenTest(newval,lenlist):
+    newVal = newval
+    nlen = len(lenlist)
+    meanmean = st.mean(lenlist)
+    standDev = st.stdev(lenlist)
+    trhsHold = math.sqrt(1+(1/nlen)) * standDev
+    if trhsHold > newVal and newVal > meanmean:
+        return True
+
+
+#Trying to crawl by checking variance by every couple 
+for clusKey, clusVal in clusterDict.items():
+    df = thmat.loc[clusVal] 
+    for colu in df.columns[:-1]:
+        nnDictColCluster = {}
+        valList = []
+        nnDictPatients = {}
+        patList = []
+        m = len(df)
+        n = 0
+        o = 0
+        while n in range(m):
+            if n == m-2:
+                break
+            else:
+                val_1 = df.iloc[n][column]
+                pat_1 = df.index[n]
+                valList.append(val_1)
+                patList.append(pat_1)
+                o = n+1
+                val_2 = df.iloc[o][column]
+                pat_2 = df.index[o]
+                valList.append(val_2)
+                patList.append(pat_2)
+                #keyIndex1 = df.index[n] not needed thus commented out
+                #keyIndex2 = df.index[o] not needed thus commented out
+                key = (f"{keyIndex1}")
+                var1 = st.variance(valList)
+                val_3 = df.iloc[o+1][column]
+                valList.append(val_3)
+                var2 = st.variance(valList)
+            
+                while var1 >= var2 and o < m-1 and varLenTest(var2, valList) == True:
+                    o += 1
+                    val_2 = df.iloc[o][column]
+                    pat2 = df.index[o]
+                    valList.append(val_2)
+                    patList.append(pat2)
+                    var2 = st.variance(valList)
+            
+            ##next n!:::
+            keyName = (f"{clusKey}-{colu}")
+            nnDictColCluster[keyName] = valList
+            n=o+1    
+            ###    
 
 
 
+
+
+
+
+
+
+for varKey, varVal in nnDictFull.items():           
+     
 
 
 
