@@ -155,62 +155,73 @@ for clusKey, clusVal in clusterDict.items():
             while var1 <= var2
                 
 """
-Because variation will continously decrease as long as the new value is under sqrt(1+(1/n)) * stdev ,  from the mean. So negative if: sqrt(1+1/n) ⋅ stdev  > x > mean  
+Because variation will continously decrease as long as the new value is under sqrt(1+(1/n)) * stdev ,  from the mean. So negative if: sqrt(1+1/n) ⋅ stdev  > x > mean  (took away trhsHold = math.sqrt(1+(1/nlen)) * stdev -- replaced with trhsHold = math.sqrt(1+(1/nlen)))
 """
 def varLenTest(newval,lenlist):
     newVal = newval
     nlen = len(lenlist)
     meanmean = st.mean(lenlist)
     standDev = st.stdev(lenlist)
-    trhsHold = math.sqrt(1+(1/nlen)) * standDev
+    trhsHold = math.sqrt(1+(1/nlen))  
     if trhsHold > newVal and newVal > meanmean:
         return True
+    else:
+        return False
 
-
+nnDictColCluster = {}
+nnPatClusterDict = {}
 #Trying to crawl by checking variance by every couple 
 for clusKey, clusVal in clusterDict.items():
-    df = thmat.loc[clusVal] 
+    df = thmat2.loc[clusVal]    
     for colu in df.columns[:-1]:
-        nnDictColCluster = {}
-        valList = []
-        nnDictPatients = {}
-        patList = []
         m = len(df)
         n = 0
         o = 0
-        while n in range(m):
-            if n == m-2:
-                break
-            else:
-                val_1 = df.iloc[n][column]
-                pat_1 = df.index[n]
-                valList.append(val_1)
-                patList.append(pat_1)
-                o = n+1
+        #print(f"this is cluster: {clusKey} and this is column: {colu}")
+    
+        while n in range(m-2):
+            
+            valList = []
+            patList = []
+            val_1 = df.iloc[n][colu]
+            pat_1 = df.index[n]
+            valList.append(val_1)
+            patList.append(pat_1)
+            o = n+1
+            val_2 = df.iloc[o][colu]
+            pat_2 = df.index[o]
+            valList.append(val_2)
+            patList.append(pat_2)
+            #keyIndex1 = df.index[n] not needed thus commented out
+            #keyIndex2 = df.index[o] not needed thus commented out
+            #key = (f"{keyIndex1}")
+            var1 = st.variance(valList)
+            o = o+1
+            val_2 = df.iloc[o][colu]
+            valList.append(val_2)
+            var2 = st.variance(valList)
+            #print(f"test is: {varLenTest(val_2, valList)}")
+            #print(f"varTest is: {var1>=var2}")
+            
+            while var1 >= var2 and o < m-1 or varLenTest(var2, valList) == True:
+                #print(f"test is: {varLenTest(var2, valList)}")
+                o += 1
+                #print(o)
                 val_2 = df.iloc[o][column]
-                pat_2 = df.index[o]
+                pat2 = df.index[o]
                 valList.append(val_2)
-                patList.append(pat_2)
-                #keyIndex1 = df.index[n] not needed thus commented out
-                #keyIndex2 = df.index[o] not needed thus commented out
-                key = (f"{keyIndex1}")
-                var1 = st.variance(valList)
-                val_3 = df.iloc[o+1][column]
-                valList.append(val_3)
+                patList.append(pat2)
                 var2 = st.variance(valList)
-            
-                while var1 >= var2 and o < m-1 and varLenTest(var2, valList) == True:
-                    o += 1
-                    val_2 = df.iloc[o][column]
-                    pat2 = df.index[o]
-                    valList.append(val_2)
-                    patList.append(pat2)
-                    var2 = st.variance(valList)
-            
-            ##next n!:::
-            keyName = (f"{clusKey}-{colu}")
+                
+        
+        ##next n!:::
+            keyName = (f"ClusKey{clusKey}-Col{colu}-Cluster{n}")
+            patKey = (f"Cluskey: {clusKey}-Col: {colu}-ClusterGroup: {n}")
             nnDictColCluster[keyName] = valList
-            n=o+1    
+            nnPatClusterDict[patKey] = patList
+            n=o
+            print(len(nnPatClusterDict))
+            print(patKey)
             ###    
 
 
