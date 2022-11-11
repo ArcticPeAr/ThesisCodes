@@ -1,3 +1,36 @@
+Rejected from heatmapCrawler
+
+
+
+#ClusterDF.Patient = ClusterDF.Patient.astype("category")
+#ClusterDF.Patient.cat.set_categories(colList1, inplace=True)
+
+#CluDFSorted = ClusterDF.sort_values(["Patient"])
+
+
+#CluDFSorted["Cluster"] = CluDFSorted["Cluster"].str.replace(r"Cluster", '')
+#CluDFSorted["Cluster"] = CluDFSorted["Cluster"].astype(int)
+
+
+#colList = CluDFSorted.Cluster.astype(int).tolist()
+
+#thmat["Cluster"] = colList
+
+
+
+simpThmat = thmat[[7,"Cluster"]]
+n=1
+clusterDict = {}
+while simpThmat["Cluster"] == n:
+    clusterDict[n] = NONE
+    for row in simpThmat.iterrows():    
+        clusterDict[n] = row
+    n+=1
+
+    simpThmat = thmat[[n,"Cluster"]]
+
+
+
 Rejected From TopicCpGPat_prTopic.py
 
 """

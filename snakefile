@@ -1,4 +1,5 @@
-    projectTfDict = {
+projectTfDict = 
+{
 "BRCA-US-Test": ["FULL"]
 }
 

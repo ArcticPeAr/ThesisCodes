@@ -205,3 +205,7 @@ for column, row in hmat.iterrows():
 
 maxVal = hmat.max().max()
 minVal = hmat.min().min() 
+
+
+
+thamat = hmat.T

@@ -373,6 +373,7 @@ write.csv(cisTopicObject@selected.model$topics, file=snakemake@output[["RegAssig
 saveRDS(cisTopicObject, file=snakemake@output[["cto"]])
 #saveRDS(cisTopicObject, file="/storage/mathelierarea/processed/petear/analysis/test/cto.rds")
 
+library(ComplexHeatmap)
 #Create empty dataframe:
 df <- data.frame(matrix(ncol=2, nrow=1))
 colnames(df) <- c("chrPos","TopicX")
@@ -393,7 +394,7 @@ write.csv(meta, file=snakemake@output[["meta"]])
 #write.csv(meta, file="/storage/mathelierarea/processed/petear/analysis/test/meta.csv")
 
 # make a matrix with hierarchical clustering as cistopicheatmap :
-hmat <- cisTopicObject@selected.model$document_expects
+hmat <- scale(cisTopicObject@selected.model$document_expects, center=TRUE, scale=TRUE)
 
 #make rownames as cistopic gives topic number as rowname (E.g. topic 1 is the first row)
 row.names(hmat) <- 1 : nrow(hmat)
@@ -403,12 +404,14 @@ rowOrder <- hclust(dist(hmat))$order
 colOrder <- hclust(dist(t(hmat)))$order
 
 hmat <- hmat[rowOrder, colOrder]
+
 write.csv(hmat, file=snakemake@output[["hmat"]])
 #write.csv(hmat, file="/storage/mathelierarea/processed/petear/analysis/test/hmat.csv")
 
 
-#####get which cluster each patient belong to with help from guidohooiveld on Github #####
 
+#####get which cluster each patient belong to with help from guidohooiveld on Github #####
+ 
 thamat = t(hmat)                #Transpose hmat because complexHeatmaps k-means clustering (which I have to use for getting cluster assignments) only works on rows.
 
 HM <- Heatmap(thamat, km=4)     #Draw a heatmap with km clusters.

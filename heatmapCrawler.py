@@ -59,6 +59,95 @@ for value in uniques:
       
 
 """
+Because variation will continously decrease as long as the new value is under sqrt(1+(1/n)) * stdev ,  from the mean. So negative if: sqrt(1+1/n) ⋅ stdev  > x > mean  (took away trhsHold = math.sqrt(1+(1/nlen)) * stdev -- replaced with trhsHold = math.sqrt(1+(1/nlen)))
+"""
+def varLenTest(newval,lenlist):
+    newVal = newval
+    nlen = len(lenlist)
+    meanmean = st.mean(lenlist)
+    standDev = st.stdev(lenlist)
+    trhsHold = math.sqrt(1+(1/nlen))  
+    if trhsHold > newVal and newVal > meanmean:
+        return True
+    else:
+        return False
+
+nnDictColCluster = {}
+nnPatClusterDict = {}
+#Trying to crawl by checking variance by every couple 
+for clusKey, clusVal in clusterDict.items():
+    df = thmat2.loc[clusVal]
+    print(f"len(df) is {len(df)} \n \n \n \n \n \n  newDF  \n \n \n \n \n \n")    
+    for colu in df.columns[:-1]:
+        print(f" \n len(df) is {len(df)} \n \n \n \n \n \n  newColu {colu}   \n clusKey {clusKey} \n \n \n \n \n")
+        m = len(df)
+        n = 0
+        o = 0
+        #print(f"this is cluster: {clusKey} and this is column: {colu}")
+    
+        while n in range(m-2):
+            #init lists
+            valList = []
+            patList = []
+            #first val and pat
+            val_1 = df.iloc[n][colu]
+            pat_1 = df.index[n]
+            valList.append(val_1)
+            patList.append(pat_1)
+            #second val and pat
+            o = n+1
+            val_2 = df.iloc[o][colu]
+            pat_2 = df.index[o]
+            valList.append(val_2)
+            patList.append(pat_2)
+            #first var
+            var1 = st.variance(valList)
+            #third val and pat
+            o = o+1
+            val_3 = df.iloc[o][colu]
+            pat_3 = df.index[o]
+            valList.append(val_3)
+            patList.append(pat_3)
+            #second var
+            var2 = st.variance(valList)
+            while var1 >= var2 and o < m-1 or varLenTest(var2, valList) == True and o < m-1:
+                #print(f"test is: {varLenTest(var2, valList)}")
+                #print(o)
+                o += 1
+                val_2 = df.iloc[o][colu]
+                pat2 = df.index[o]
+                valList.append(val_2)
+                patList.append(pat2)
+                var2 = st.variance(valList)
+                #print(f"while o is {o}")
+            else:
+                n = o + 1
+                print(f"N IS {n}")
+        print(f"patlist:{patList}")
+        print(f"this patList is for column:{colu}, cluster:{clusKey}")
+        ##next n!:::
+        keyName = (f"Col:{colu} ClusKey:{clusKey} ClusterGroup:{n}")
+        patKey = (f"Col:{colu} Cluskey:{clusKey} ClusterGroup:{n}")
+        nnDictColCluster[keyName] = valList
+        nnPatClusterDict[patKey] = patList
+        print(f"lenPatClusterDict Is {len(nnPatClusterDict)}")
+        print(f"patkey is {patKey}")
+        ###    
+
+## Maybe sort clusterDict based on key? 
+
+
+
+
+
+
+
+
+
+
+
+
+"""
 Function creates chunks over a list, to be used later for selecting low variance values. 
 WARNING had to change from tuples to list because downstream function was not working - Gave error: "TypeError: 'tuple' object is not callable"
 """   
@@ -154,76 +243,6 @@ for clusKey, clusVal in clusterDict.items():
             var2 = var1 
             while var1 <= var2
                 
-"""
-Because variation will continously decrease as long as the new value is under sqrt(1+(1/n)) * stdev ,  from the mean. So negative if: sqrt(1+1/n) ⋅ stdev  > x > mean  (took away trhsHold = math.sqrt(1+(1/nlen)) * stdev -- replaced with trhsHold = math.sqrt(1+(1/nlen)))
-"""
-def varLenTest(newval,lenlist):
-    newVal = newval
-    nlen = len(lenlist)
-    meanmean = st.mean(lenlist)
-    standDev = st.stdev(lenlist)
-    trhsHold = math.sqrt(1+(1/nlen))  
-    if trhsHold > newVal and newVal > meanmean:
-        return True
-    else:
-        return False
-
-nnDictColCluster = {}
-nnPatClusterDict = {}
-#Trying to crawl by checking variance by every couple 
-for clusKey, clusVal in clusterDict.items():
-    df = thmat2.loc[clusVal]    
-    for colu in df.columns[:-1]:
-        m = len(df)
-        n = 0
-        o = 0
-        #print(f"this is cluster: {clusKey} and this is column: {colu}")
-    
-        while n in range(m-2):
-            
-            valList = []
-            patList = []
-            val_1 = df.iloc[n][colu]
-            pat_1 = df.index[n]
-            valList.append(val_1)
-            patList.append(pat_1)
-            o = n+1
-            val_2 = df.iloc[o][colu]
-            pat_2 = df.index[o]
-            valList.append(val_2)
-            patList.append(pat_2)
-            #keyIndex1 = df.index[n] not needed thus commented out
-            #keyIndex2 = df.index[o] not needed thus commented out
-            #key = (f"{keyIndex1}")
-            var1 = st.variance(valList)
-            o = o+1
-            val_2 = df.iloc[o][colu]
-            valList.append(val_2)
-            var2 = st.variance(valList)
-            #print(f"test is: {varLenTest(val_2, valList)}")
-            #print(f"varTest is: {var1>=var2}")
-            
-            while var1 >= var2 and o < m-1 or varLenTest(var2, valList) == True:
-                #print(f"test is: {varLenTest(var2, valList)}")
-                o += 1
-                #print(o)
-                val_2 = df.iloc[o][column]
-                pat2 = df.index[o]
-                valList.append(val_2)
-                patList.append(pat2)
-                var2 = st.variance(valList)
-                
-        
-        ##next n!:::
-            keyName = (f"ClusKey{clusKey}-Col{colu}-Cluster{n}")
-            patKey = (f"Cluskey: {clusKey}-Col: {colu}-ClusterGroup: {n}")
-            nnDictColCluster[keyName] = valList
-            nnPatClusterDict[patKey] = patList
-            n=o
-            print(len(nnPatClusterDict))
-            print(patKey)
-            ###    
-
 
 
 
