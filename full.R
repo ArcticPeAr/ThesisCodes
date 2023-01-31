@@ -1,12 +1,20 @@
 #Number of cores to be used
-NoCores = 10
+NoCores = 18
 #Creates proper matrix before using topic modeling and performing great analysis
 library(Amelia)
 library(tidyverse)
 
+args <- commandArgs(trailingOnly = TRUE)
 
-methTable <- read.table(snakemake@input[["CpG"]], header=TRUE, sep="\t")
-Coords <- read.table(snakemake@input[["coords"]])
+CpG <- args[1]
+coords <- args[2]
+premeta <- args[3]
+
+methtable <- readRDS(CpG)
+Coords <- read.table(coords)
+
+#methTable <- read.table(snakemake@input[["CpG"]], header=TRUE, sep="\t")
+#Coords <- read.table(snakemake@input[["coords"]])
 #methTable <- read.table("/storage/mathelierarea/processed/petear/SnakemakeInputFiles/BRCA-US_methylation450.sorted.perDonor.tsv", header=TRUE, sep="\t")
 #Coords <- read.table("/storage/mathelierarea/processed/petear/SnakemakeInputFiles/BRCA-US_FULL.bed.hg19.wgEncodeHaibMethyl450CpgIslandDetails_emap.probes.bed")
 
@@ -50,7 +58,7 @@ rownames(methTable2) <- methTable[,1]
 
 #############PrepMeta###############
 
-samplemeta <- read.table(snakemake@input[["premeta"]], header=TRUE, sep="\t")
+samplemeta <- read.table(premeta, header=TRUE, sep="\t")
 #samplemeta <- read.table("/storage/mathelierarea/processed/petear/SnakemakeInputFiles/Meta/sampleinfo_TCGA_RNA_seq_cluster.txt", header=TRUE, sep="\t")
 
 ###OTHERS THAN BRCA::: _Subtype_mRNA', 'Subtype_Selected' & 'Subtype_Immune_Model_Based
@@ -129,8 +137,13 @@ rm(metaSD)
 suppressWarnings(library("cisTopic"))
 
 #Name the PDF after what cancer type and TF:
-PDF.name <- snakemake@output[[1]]
-write.csv(methTable2, file=gzfile(snakemake@output[[2]]))
+PDF.name <- args[4]
+
+methTable2GZ <- args[5]
+write.csv(methTable2, file=methTable2GZ)
+
+#PDF.name <- snakemake@output[[1]]
+#write.csv(methTable2, file=gzfile(snakemake@output[[2]]))
 #write.csv(methTable2, file=gzfile("/storage/mathelierarea/processed/petear/analysis/test/methtable.csv.xz"))
 
 #If removing NAs by deletion: (CHECK IF SHOULD USE AMPUTATION!!!
@@ -356,21 +369,26 @@ dev.off()
 ###Restore warnings
 options(warn = oldw)
 
+topicAssigToPatientOut <- args[6]
 
 #### Write out topic assignments to the patients
-write.csv(cisTopicObject@selected.model$document_expects, file=snakemake@output[["topicAssigToPatient"]])
+write.csv(cisTopicObject@selected.model$document_expects, file=topicAssigToPatientOut)
 #write.csv(cisTopicObject@selected.model$document_expects, file="/storage/mathelierarea/processed/petear/analysis/test/topicAssigToPatient.csv")
 
+
+
 #### Region scores per topic (normalized umap)
-write.csv(cisTopicObject@region.data, file=snakemake@output[["RegScrPrtopic"]])
+RegScrPrtopicOut <- args[7]
+write.csv(cisTopicObject@region.data, file=RegScrPrtopicOut)
 #write.csv(cisTopicObject@region.data, file="/storage/mathelierarea/processed/petear/analysis/test/RegScrPrtopic.csv")
 
 #### Unnormalized region assignments
-write.csv(cisTopicObject@selected.model$topics, file=snakemake@output[["RegAssigUnormal"]])
-#write.csv(cisTopicObject@selected.model$topics, file="/storage/mathelierarea/processed/petear/analysis/test/RegAssigUnormal.csv")
+RegAssigUnormalOut <- args[8]
+write.csv(cisTopicObject@selected.model$topics, file=RegAssigUnormalOut)
+#write.csv(cisTopicObject@selected.model$topics, file="/storage/mathelierarea/processed/petear/analysis/test/RegAssigUnormal.csv")bina
 
-
-saveRDS(cisTopicObject, file=snakemake@output[["cto"]])
+ctoOut <- args[9]
+saveRDS(cisTopicObject, file=ctoOut)
 #saveRDS(cisTopicObject, file="/storage/mathelierarea/processed/petear/analysis/test/cto.rds")
 
 library(ComplexHeatmap)
@@ -387,10 +405,12 @@ for (attr in attributes(cisTopicObject@binarized.cisTopics)$names)
 }
 df$TopicX <- NULL
 
-write.csv(df, file=snakemake@output[["bina"]])
+binaOut <- args[10]
+write.csv(df, file=binaOut)
 #write.csv(df, file="/storage/mathelierarea/processed/petear/analysis/test/bina.csv")
 
-write.csv(meta, file=snakemake@output[["meta"]])
+metaOut <- args[11]
+write.csv(meta, file=metaOut)
 #write.csv(meta, file="/storage/mathelierarea/processed/petear/analysis/test/meta.csv")
 
 # make a matrix with hierarchical clustering as cistopicheatmap :
@@ -405,7 +425,8 @@ colOrder <- hclust(dist(t(hmat)))$order
 
 hmat <- hmat[rowOrder, colOrder]
 
-write.csv(hmat, file=snakemake@output[["hmat"]])
+hmatOut <- args[12]
+hmatOut <- write.csv(hmat, file=hmatOut)
 #write.csv(hmat, file="/storage/mathelierarea/processed/petear/analysis/test/hmat.csv")
 
 
@@ -429,7 +450,8 @@ return(out)
 }) %>%  
 do.call(rbind, .)
 
-write.csv(ClusterDF, file=snakemake@output[["ClusterDF"]])
+ClusterDFOut <- args[13]
+write.csv(ClusterDF, file=ClusterDFOut)
 #write.csv(ClusterDF, file="/storage/mathelierarea/processed/petear/analysis/test/ClusterDF.csv")
 
 
