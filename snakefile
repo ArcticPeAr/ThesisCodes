@@ -44,11 +44,11 @@ rule all:
 #metadata with icgc_donor_id etc is at same location with this name::  {project}_sample_Info_260620.tsv
 rule FromRawToCis:
     input:
-        CpG = "/home/petear/CistopicDir/{project}_methylation450.sorted.perDonor.tsv",
+        CpG = "/home/petear/CistopicDir/{project}.RDS",
         coords = "/home/petear/CistopicDir/{project}_{tfactor}.bed.hg19.wgEncodeHaibMethyl450CpgIslandDetails_emap.probes.bed",
         premeta = "/home/petear/CistopicDir/Meta/sampleinfo_TCGA_RNA_seq_cluster.txt"
     output:
-        "/home/petear/CistopicDir/Output/{project}/{project}_{tfactor}.pdf",
+        pdfpdf = "/home/petear/CistopicDir/Output/{project}/{project}_{tfactor}.pdf",
         methTable2GZ = "/home/petear/CistopicDir/Output/{project}/MethylTable_{project}_{tfactor}.csv.xz",
         topicAssigToPatientOut = "/home/petear/CistopicDir/Output/{project}/topicAssigToPatient_{project}_{tfactor}.csv",
         RegScrPrtopicOut = "/home/petear/CistopicDir/Output/{project}/RegScrPrtopic_{project}_{tfactor}.csv",
@@ -61,7 +61,7 @@ rule FromRawToCis:
     priority:
         100
     shell:
-        "Rscript full.R {wildcards.project} {wildcards.tfactor} > "
+        "Rscript full.R {input.CpG} {input.coords} {input.premeta} {output.pdfpdf} {output.methTable2GZ} {output.topicAssigToPatientOut} {output.RegScrPrtopicOut} {output.RegAssigUnormalOut} {output.ctoOut} {output.binaOut} {output.metaOut} {output.hmatOut} {output.ClusterDFOut}"
 
 #Python find highest contributing patient and CpG to topics and make violinplots with seaborn.
 rule topPatientCpG:

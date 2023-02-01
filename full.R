@@ -10,7 +10,7 @@ CpG <- args[1]
 coords <- args[2]
 premeta <- args[3]
 
-methtable <- readRDS(CpG)
+methTable <- readRDS(CpG)
 Coords <- read.table(coords)
 
 #methTable <- read.table(snakemake@input[["CpG"]], header=TRUE, sep="\t")
@@ -137,7 +137,8 @@ rm(metaSD)
 suppressWarnings(library("cisTopic"))
 
 #Name the PDF after what cancer type and TF:
-PDF.name <- args[4]
+pdfpdf <- args[4]
+PDF.name <- pdfpdf
 
 methTable2GZ <- args[5]
 write.csv(methTable2, file=methTable2GZ)
