@@ -84,8 +84,8 @@ rule probeHeatmap:
         "/home/petear/CistopicDir/Output/{project}/ProbeTopicScore_{project}_{tfactor}.csv"
     output:
         "/home/petear/CistopicDir/Output/{project}/PrbTpcScrHeatmap_{project}_{tfactor}.pdf"
-    script:
-        "Heatmap.R"
+    shell:
+        "Rscript Heatmap.R {input} {output}"
 
 #CSVs can be big so this rule compresses the CSV to XZ to save space.
 rule MethTabl_CSVtoXZ:
@@ -106,7 +106,7 @@ checkpoint get_bed:
     priority:
         99
     shell:
-        "Rscript /storage/mathelierarea/processed/petear/Snakemake2/CisBed.R /home/petear/CistopicDir/Output/{wildcards.project}/CTO_{wildcards.project}_{wildcards.tfactor}.rds /home/petear/CistopicDir/Output/{wildcards.project}/bedfiles_{wildcards.project}_{wildcards.tfactor}"
+        "Rscript CisBed.R /home/petear/CistopicDir/Output/{wildcards.project}/CTO_{wildcards.project}_{wildcards.tfactor}.rds /home/petear/CistopicDir/Output/{wildcards.project}/bedfiles_{wildcards.project}_{wildcards.tfactor}"
 
 
 #Liftover bed from HG19 to HG38 and then delete the HG19 (To easier use snakemake with unibind)
@@ -118,7 +118,7 @@ rule liftover:
     priority:
         98
     shell:
-        "liftOver {input.HG19Bed} /storage/mathelierarea/processed/petear/hg19ToHg38.over.chain.gz {output.HG38Bed} unMapped"
+        "liftOver {input.HG19Bed} /home/petear/CistopicDir/hg19ToHg38.over.chain.gz {output.HG38Bed} unMapped"
 
 
 
@@ -153,7 +153,7 @@ rule unibind:
         "/home/petear/CistopicDir/Output/{project}/bedfiles_{project}_{tfactor}/UB_output_Topic{bednumber}/allEnrichments_swarm.pdf"
 
     shell:
-        "bash /storage/mathelierarea/processed/petear/UnibindFolder/UnibindMaster/bin/UniBind_enrich.sh oneSetBg /storage/mathelierarea/processed/petear/UnibindFolder/LolaUpdated/UniBind_LOLA.RDS {input.topicBed} {input.Universe} /home/petear/CistopicDir/Output/{wildcards.project}/bedfiles_{wildcards.project}_{wildcards.tfactor}/UB_output_Topic{wildcards.bednumber}"
+        "bash /home/petear/CistopicDir/UnibindFolder/UnibindMaster/bin/UniBind_enrich.sh oneSetBg /home/petear/CistopicDir/UnibindFolder/LolaUpdated/UniBind_LOLA.RDS {input.topicBed} {input.Universe} /home/petear/CistopicDir/Output/{wildcards.project}/bedfiles_{wildcards.project}_{wildcards.tfactor}/UB_output_Topic{wildcards.bednumber}"
 
 
 #make function to continue to work on sepearate bedfiles
@@ -199,7 +199,7 @@ rule rGREAT:
     output:
         GreatPDF = "/home/petear/CistopicDir/Output/{project}/bedfiles_{project}_{tfactor}/Topic_{bednumber}_HG38.bed_GREAT.pdf"
     shell:
-        "Rscript /storage/mathelierarea/processed/petear/Snakemake2/GREAT.R /home/petear/CistopicDir/Output/{wildcards.project}/bedfiles_{wildcards.project}_{wildcards.tfactor}/Topic_{wildcards.bednumber}_HG38.bed /home/petear/CistopicDir/Output/{wildcards.project}/bedfiles_{wildcards.project}_{wildcards.tfactor}/{wildcards.bednumber}_HG38.bed_GREAT.pdf"
+        "Rscript GREAT.R /home/petear/CistopicDir/Output/{wildcards.project}/bedfiles_{wildcards.project}_{wildcards.tfactor}/Topic_{wildcards.bednumber}_HG38.bed /home/petear/CistopicDir/Output/{wildcards.project}/bedfiles_{wildcards.project}_{wildcards.tfactor}/{wildcards.bednumber}_HG38.bed_GREAT.pdf"
 
 def rGREATFunc(wildcards):
     checkpoint_output = checkpoints.get_bed.get(**wildcards).output[0]  #Collect each output (from output[0]) from checkpoint
