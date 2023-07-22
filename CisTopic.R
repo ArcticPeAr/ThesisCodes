@@ -1,25 +1,30 @@
 #Load data from command line in snakemake
 args <- commandArgs(trailingOnly = TRUE)
 
-argCounter = 1
-#Number of cores to be used
-NumberOfCores = args[argCounter]
-argCounter = argCounter + 1
-
 
 #To impute missing values in the data amelia is used
 library("Amelia")
 library("tidyverse")
 
+argCounter =1
+
+NumberOfCores = args[argCounter]
+NumberOfCores = as.integer(NumberOfCores)
+argCounter = argCounter + 1
+cat("\n","NumberOfCores: ", NumberOfCores, "\n")
+
 
 #String for the BRCA - loop
 whichLoopString <- args[argCounter]
 argCounter = argCounter + 1
+
+cat (" Sample: ", whichLoopString, "\n")
+#Number of cores to be used
+
 #The methylation table
 CpG <- args[argCounter]
 argCounter = argCounter + 1
 
-cat("CpG: ", CpG, "")
 
 #The coordinates of the CpGs with respect to the patients
 coords <- args[argCounter]
@@ -65,8 +70,21 @@ n=n+1
 
 idvars = c('Coords')
 
+#parallelization of Amelia needs more than 1 core. If only 1 core is available, then Amelia is run without parallelization
+if (AmCores > 1) {
+#multicore for Amelia
+library(parallel)
+AmCores = as.integer(floor(NumberOfCores/2))
+cl <- makeCluster(AmCores)
 
+options("Amelia.clustermode" = cl)
+
+methTable <- amelia(methTable, m = 1, idvars = idvars,parallel = "multicore")
+
+stopCluster(cl)
+} else {
 methTable <- amelia(methTable, m = 1, idvars = idvars)
+}
 
 methTable <- methTable$imputations[[1]]
 
@@ -77,7 +95,7 @@ rownames(methTable2) <- methTable[,1]
 #The metadata of the patients is prepared
 samplemeta <- read.table(premeta, header=TRUE, sep="\t")
 
-if (whichLoopString == "BRCA")
+if (whichLoopString == "BRCA-US")
 {
 metaframe <- samplemeta %>% select(donor_id, PAM50, ER.Status, PAM50_genefu, PR.Status, HER2.Final.Status)
 
@@ -90,12 +108,10 @@ metaframe$PAM50 <- gsub("LuminalB","Luminal B", metaframe$PAM50)
 #If redundancy in data (E.g same donors multiple times)
 metaSD <- metaframe %>% distinct(donor_id, .keep_all = TRUE)
 
-}
-else 
+} else 
 { 
 metaframe <- samplemeta %>% select(icgc_donor_id, Subtype_Selected, Subtype_Immune_Model_Based)
 metaSD <- metaframe %>% distinct(icgc_donor_id, .keep_all = TRUE)
-
 }  
 
 ##########Make sure the metadata is correct!
@@ -151,8 +167,11 @@ rm(metaSD)
 methTable2xlsx <- args[argCounter]
 argCounter = argCounter + 1
 #save the methTable2 as xlsx (because of xlsx has a more compact storage than csv)
-library(xlsx)
-write.xlsx(methTable2, methTable2xlsx, row.names = TRUE)
+library(openxlsx)
+wb <- createWorkbook()
+addWorksheet(wb, "Sheet 1")
+writeData(wb, "Sheet 1", methTable2)
+saveWorkbook(wb, methTable2xlsx, overwrite = TRUE)
 
 
 ######################################################################################
@@ -171,9 +190,27 @@ cisTopicObject <- createcisTopicObject(is.acc=0.5, min.cells=0, min.regions=0, c
 cisTopicObject <- addCellMetadata(cisTopicObject, cell.data = meta)
 cisTopicObject <- runWarpLDAModels(cisTopicObject, topic=c(4:18), seed=123, nCores=NumberOfCores, addModels=FALSE)
 
-pdf(PDF.name, height=10, width=15)
+cat("cisTopicObject created\n")
+pdf(PDFName, height=10, width=15)
 cisTopicObject <- selectModel(cisTopicObject, type='perplexity')
+cat("Model selected\n")
 
 ctoOut <- args[argCounter]
 argCounter = argCounter + 1
 saveRDS(cisTopicObject, file=ctoOut)
+
+topicAssigToPatientOut <- args[argCounter]
+argCounter = argCounter + 1
+#### Write out topic assignments to the patients
+write.csv(cisTopicObject@selected.model$document_expects, file=topicAssigToPatientOut)
+
+RegScrPrtopicOut <- args[argCounter]
+argCounter = argCounter + 1
+write.csv(cisTopicObject@region.data, file=RegScrPrtopicOut)
+#write.csv(cisTopicObject@region.data, file="/storage/mathelierarea/processed/petear/analysis/test/RegScrPrtopic.csv")
+
+#### Unnormalized region assignments
+RegAssigUnormalOut <- args[argCounter]
+argCounter = argCounter + 1
+write.csv(cisTopicObject@selected.model$topics, file=RegAssigUnormalOut)
+
