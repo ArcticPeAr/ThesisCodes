@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 import lzma
+import sys
 #####
 
 
@@ -17,10 +18,15 @@ regScrPrtopic = pd.read_csv("RegScrPrtopic_BRCA-US_FULL.csv", delimiter=",")
 topicAssigToPatient = pd.read_csv("topicAssigToPatient_BRCA-US_FULL.csv", delimiter=",")
 
 """
-methTable = pdf.read_csv(snakemake.input[methTab], delimiter=",", compression="xz")
-regScrPrtopic = pd.read_csv(snakemake.input[regScrNorm], delimiter=",")
-regAssigUnormal = pd.read_csv(snakemake.input[regScrUnrm], delimiter=",")
-topicAssigToPatient = pd.read_csv(snakemake.input[topicAssig], delimiter=",")
+methTable = sys.argv[1]
+regScrNorm = sys.argv[2]
+regScrUnrm = sys.argv[3]
+topicAssig = sys.argv[4]
+
+methTable = pd.read_csv(methTable, delimiter=",")
+regScrPrtopic = pd.read_csv(regScrNorm, delimiter=",")
+regAssigUnormal = pd.read_csv(regScrUnrm, delimiter=",")
+topicAssigToPatient = pd.read_csv(topicAssig, delimiter=",")
 
 ####################################
 

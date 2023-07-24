@@ -5,6 +5,7 @@ args <- commandArgs(trailingOnly = TRUE)
 #To impute missing values in the data amelia is used
 library("Amelia")
 library("tidyverse")
+library("readODS")
 
 argCounter =1
 
@@ -70,11 +71,12 @@ n=n+1
 
 idvars = c('Coords')
 
+AmCores = as.integer(floor(NumberOfCores/2))
+
 #parallelization of Amelia needs more than 1 core. If only 1 core is available, then Amelia is run without parallelization
 if (AmCores > 1) {
 #multicore for Amelia
 library(parallel)
-AmCores = as.integer(floor(NumberOfCores/2))
 cl <- makeCluster(AmCores)
 
 options("Amelia.clustermode" = cl)
@@ -93,6 +95,7 @@ rownames(methTable2) <- methTable[,1]
 
 
 #The metadata of the patients is prepared
+cat("Metadata is being prepared\n")
 samplemeta <- read.table(premeta, header=TRUE, sep="\t")
 
 if (whichLoopString == "BRCA-US")
@@ -164,15 +167,10 @@ rm(metaframe)
 rm(metaSD)
 
 
-methTable2xlsx <- args[argCounter]
+methTable2ods <- args[argCounter]
 argCounter = argCounter + 1
-#save the methTable2 as xlsx (because of xlsx has a more compact storage than csv)
-library(openxlsx)
-wb <- createWorkbook()
-addWorksheet(wb, "Sheet 1")
-writeData(wb, "Sheet 1", methTable2)
-saveWorkbook(wb, methTable2xlsx, overwrite = TRUE)
-
+#save the methTable2 as odt (because of ods has a more compact storage than csv)
+write_ods(methTable2, "methTable2.ods")
 
 ######################################################################################
 #CISTOPIC
@@ -202,15 +200,19 @@ saveRDS(cisTopicObject, file=ctoOut)
 topicAssigToPatientOut <- args[argCounter]
 argCounter = argCounter + 1
 #### Write out topic assignments to the patients
-write.csv(cisTopicObject@selected.model$document_expects, file=topicAssigToPatientOut)
+write_ods(cisTopicObject@selected.model$document_expects, topicAssigToPatientOut)
 
 RegScrPrtopicOut <- args[argCounter]
 argCounter = argCounter + 1
-write.csv(cisTopicObject@region.data, file=RegScrPrtopicOut)
-#write.csv(cisTopicObject@region.data, file="/storage/mathelierarea/processed/petear/analysis/test/RegScrPrtopic.csv")
+write_ods(cisTopicObject@region.data, RegScrPrtopicOut)
+#write.xlsx(cisTopicObject@region.data, file="/storage/mathelierarea/processed/petear/analysis/test/RegScrPrtopic.csv")
 
 #### Unnormalized region assignments
 RegAssigUnormalOut <- args[argCounter]
 argCounter = argCounter + 1
-write.csv(cisTopicObject@selected.model$topics, file=RegAssigUnormalOut)
+write_ods(cisTopicObject@selected.model$topics, RegAssigUnormalOut)
 
+#### Binarized region assignments
+binaOut <- args[argCounter]
+bina <- binarizecisTopics(cisTopicObject, thrP=0.975, plot=TRUE)
+write_ods(bina, binaOut)

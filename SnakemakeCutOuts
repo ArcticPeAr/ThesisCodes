@@ -1,0 +1,6 @@
+rule FromRawToCis:
+    output:
+
+        Not metaOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/meta_{project}_{tfactor}.csv",
+        Not hmatOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/hmat_{project}_{tfactor}.csv",
+        Not ClusterDFOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/ClusterDF_{project}_{tfactor}.csv"

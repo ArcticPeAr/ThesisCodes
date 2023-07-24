@@ -1,9 +1,20 @@
 library(fastICA)
+librar("ggplot2")
+library("RColorBrewer")
+suppressWarnings(library("cisTopic"))
 
-ctoIn <- args[1]
+args <- commandArgs(trailingOnly = TRUE)
+#Argcounter is used to keep track of the arguments in case more are added
+argCounter = 1
+
+ctoIn <- args[argCounter]
+argCounter = argCounter + 1
+
 cisTopicObject <- readRDS(ctoIn)
 
-IcaPDF <- args[2]
+IcaPDF <- args[argCounter]
+argCounter = argCounter + 1
+
 pdfNameIca <- icaPDF
 
 pdf(pdfNameIca)

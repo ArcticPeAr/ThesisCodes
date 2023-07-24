@@ -1,13 +1,5 @@
 projectTfDict = {"BRCA-US": ["FULL"]}
 
-###  DEFs   ################################################################
-# inputs = [expand('{project}_{tfactor}',
-    #                  project=key, tfactor=value)
-#           for key, value in projectTfDict.items()]
-
-############################################################################
-
-
 PROJECT = []
 TFACTOR = []
 for key, value in projectTfDict.items():
@@ -15,9 +7,9 @@ for key, value in projectTfDict.items():
         PROJECT.append(key)
         TFACTOR.append(v)
 
-
 print(PROJECT)
 print(TFACTOR)
+
 ############################################################################
 rule all:
     input:
@@ -25,58 +17,76 @@ rule all:
         expand("/media/veracrypt10/Biotin/CistopicDir/Output/{project}/{project}_{tfactor}_universe.bed", project=PROJECT, tfactor=TFACTOR), \
         expand("/media/veracrypt10/Biotin/CistopicDir/Output/{project}/Complete_{project}_{tfactor}.pdf", project=PROJECT, tfactor=TFACTOR)
 
-        ############################################################################
+############################################################################
 
-
-
-# #Rename probes to fit current project
-# if TFACTOR == "FULL":
-#     rule renameFullProbeslist:
-#         input:
-#             "FULL.bed.hg19.wgEncodeHaibMethyl450CpgIslandDetails_emap.probes.bed"
-#         output:
-#             "{project}_FULL.bed.hg19.wgEncodeHaibMethyl450CpgIslandDetails_emap.probes.bed"
-#         shell:
-#             "cp *.bed.hg19.wgEncodeHaibMethyl450CpgIslandDetails_emap.probes.bed {wildcards.project}_FULL.bed.hg19.wgEncodeHaibMethyl450CpgIslandDetails_emap.probes.bed"
-
-#Remove rows(probes) with more than 50% NAs and impute the rest (Change FROM AMELIA to METHYLIMP when finished):
-#metadata with PAM50 and ER.Status is in same location with this name:: sampleinfo_TCGA_RNA_seq_cluster.txt
-#metadata with icgc_donor_id etc is at same location with this name::  {project}_sample_Info_260620.tsv
 rule FromRawToCis:
     input:
-        CpG = "/media/veracrypt10/Biotin/CistopicDir/{project}.RDS",
+        CpG = "/media/veracrypt10/Biotin/CistopicDir/{project}-small.RDS",
         coords = "/media/veracrypt10/Biotin/CistopicDir/{project}_{tfactor}.bed.hg19.wgEncodeHaibMethyl450CpgIslandDetails_emap.probes.bed",
         premeta = "/media/veracrypt10/Biotin/CistopicDir/Meta/sampleinfo_TCGA_RNA_seq_cluster.txt"
     output:
-        pdfpdf = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/{project}_{tfactor}.pdf",
         methTable2GZ = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/MethylTable_{project}_{tfactor}.csv.xz",
+        pdfpdf = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/{project}_{tfactor}.pdf",
+        ctoOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/CTO_{project}_{tfactor}.rds",
         topicAssigToPatientOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/topicAssigToPatient_{project}_{tfactor}.csv",
         RegScrPrtopicOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/RegScrPrtopic_{project}_{tfactor}.csv",
         RegAssigUnormalOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/RegAssigUnormal_{project}_{tfactor}.csv",
-        ctoOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/CTO_{project}_{tfactor}.rds",
         binaOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/bina_{project}_{tfactor}.csv",
-        metaOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/meta_{project}_{tfactor}.csv",
-        hmatOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/hmat_{project}_{tfactor}.csv",
-        ClusterDFOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/ClusterDF_{project}_{tfactor}.csv"
+    params:
+        string = "{project}"
+    threads: workflow.cores
+    shell:
+        "Rscript CisTopic.R {threads} {params.string} {input.CpG} {input.coords} {input.premeta} {output.methTable2GZ} {output.pdfpdf} {output.topicAssigToPatientOut} {output.RegScrPrtopicOut} {output.RegAssigUnormalOut} {output.ctoOut} {output.binaOut}"
+
+#Use Indepentent Component Analysis for decomposing the data into independent components. This can reveal hidden structures or patterns that are not apparent in original data
+rule fICA:
+    input:
+        ctoIn = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/CTO_{project}_{tfactor}.rds"
+    output:
+        fICApdf = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/fICAplots_{project}_{tfactor}.pdf"
     priority:
         100
     shell:
-        "Rscript full.R {input.CpG} {input.coords} {input.premeta} {output.pdfpdf} {output.methTable2GZ} {output.topicAssigToPatientOut} {output.RegScrPrtopicOut} {output.RegAssigUnormalOut} {output.ctoOut} {output.binaOut} {output.metaOut} {output.hmatOut} {output.ClusterDFOut}"
+        "Rscript fICA.R {input.ctoIn} {output.fICAPDF}"
 
-#Python find highest contributing patient and CpG to topics and make violinplots with seaborn.
-rule topPatientCpG:
+#Dimensionality reduction with UMAP
+rule UMAP: 
     input:
-        methTab = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/MethylTable_{project}_{tfactor}.csv",
-        regScrNorm = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/RegScrPrtopic_{project}_{tfactor}.csv",
-        regScrUnrm = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/RegAssigUnormal_{project}_{tfactor}.csv",
-        topicAssig = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/topicAssigToPatient_{project}_{tfactor}.csv",
-        binFrame = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/binarized_{project}_{tfactor}.csv"
+        ctoIn = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/CTO_{project}_{tfactor}.rds"
     output:
-        "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/Violin_{project}_{tfactor}.pdf"
-        "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/ProbeTopicScore_{project}_{tfactor}.csv"
-    script:
-        "seabornViolin.py"
+        UMAPpdf = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/UMAPplots_{project}_{tfactor}.pdf"
+    priority:
+        99
+    shell:
+        "Rscript UMAP.R {input.ctoIn} {output.UMAPPDF}"
 
+#Supposed to find clusters for each topic and make a pdf with the clusters.
+rule clusters:
+    input: 
+        ctoIn = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/CTO_{project}_{tfactor}.rds"
+    output:
+        clusterPDF = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/Clusterplots_{project}_{tfactor}.pdf"
+    priority:
+        98
+    shell:
+        "Rscript Clusters.R {input.ctoIn} {output.clusterPDF}"
+
+
+
+#Make a bed file with the CpG coordinates and the topic scores for each CpG
+#Python find highest contributing patient and CpG to topics and make violinplots with seaborn.
+rule seabornViolin:
+    input:
+        methTable2GZ = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/MethylTable_{project}_{tfactor}.csv.xz",
+        RegScrPrtopicOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/RegScrPrtopic_{project}_{tfactor}.csv",
+        RegAssigUnormalOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/RegAssigUnormal_{project}_{tfactor}.csv",
+        topicAssigToPatientOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/topicAssigToPatient_{project}_{tfactor}.csv",
+        binaOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/bina_{project}_{tfactor}.csv",
+    output:
+        ProbeTopicScoreCSV = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/ProbeTopicScore_{project}_{tfactor}.csv",    
+        ViolinPDF = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/Violin_{project}_{tfactor}.pdf"
+    shell:
+        "python3 seabornViolin.py {input.methTable2GZ} {input.RegScrPrtopicOut} {input.RegAssigUnormalOut} {input.topicAssigToPatientOut} {input.binaOut} {output.ViolinPDF} {output.ProbeTopicScoreCSV}"
 
 #Make heatmap in ggplot2 from top patients and CpGs found in 'rule seabornViolin'
 rule probeHeatmap:
@@ -85,7 +95,8 @@ rule probeHeatmap:
     output:
         "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/PrbTpcScrHeatmap_{project}_{tfactor}.pdf"
     shell:
-        "Rscript Heatmap.R {input} {output}"
+        "Rscript Heatmap.R {input} {output}" 
+
 
 #CSVs can be big so this rule compresses the CSV to XZ to save space.
 rule MethTabl_CSVtoXZ:
@@ -208,7 +219,7 @@ def rGREATFunc(wildcards):
                         bednumber = glob_wildcards(os.path.join(checkpoint_output, "Topic_{bednumber}.bed")).bednumber)
     return file_names
 
-
+#Merge PDFs from rGREAT
 rule MergeGREATPDFs:
     input:
         rGREATFunc
@@ -217,7 +228,7 @@ rule MergeGREATPDFs:
     shell:
         "pdfunite {input} {output}"
 
-
+#Merge all PDFs to make a final PDF with full report and all plots
 rule completePDF:
     input:
         cisTPDF =   "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/merged_{project}_{tfactor}.pdf",

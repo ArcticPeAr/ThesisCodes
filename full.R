@@ -1,17 +1,19 @@
 #Number of cores to be used
-NoCores = 18
+NoCores = 4
 #Creates proper matrix before using topic modeling and performing great analysis
-library(Amelia)
-library(tidyverse)
+library("Amelia")
 
 args <- commandArgs(trailingOnly = TRUE)
 
 CpG <- args[1]
+cat("CpG: ", CpG, "")
 coords <- args[2]
 premeta <- args[3]
 
 methTable <- readRDS(CpG)
+#methTable <- head(methTable, 10000)
 Coords <- read.table(coords)
+library(tidyverse)
 
 #methTable <- read.table(snakemake@input[["CpG"]], header=TRUE, sep="\t")
 #Coords <- read.table(snakemake@input[["coords"]])
@@ -162,10 +164,14 @@ cisTopicObject <- selectModel(cisTopicObject, type='perplexity')
 #¤cisTopicObject <- selectModel(cisTopicObject)
 
 
+##########################################################################################
+#Save cisTopicObject
+##########################################################################################
+ctoOut <- args[69]
+saveRDS(cisTopicObject, file=ctoOut)
+#saveRDS(cisTopicObject, file="/storage/mathelierarea/processed/petear/analysis/test/cto.rds")
 
-
-
-########## fICA ########
+########## fICA ##############################################################################################################################################################################################################################
 library(fastICA)
 
 t_cisTo <- t(cisTopicObject@selected.model$document_expects)
@@ -367,9 +373,11 @@ plotFeatures(cisTopicObject, method='Umap', target='region', topic_contr='NormTo
 
 dev.off()
 
-###Restore warnings
+###Restore warnings####
 options(warn = oldw)
 
+
+######################################THIS IS NOT IN OWN MODULE
 topicAssigToPatientOut <- args[6]
 
 #### Write out topic assignments to the patients
@@ -388,27 +396,26 @@ RegAssigUnormalOut <- args[8]
 write.csv(cisTopicObject@selected.model$topics, file=RegAssigUnormalOut)
 #write.csv(cisTopicObject@selected.model$topics, file="/storage/mathelierarea/processed/petear/analysis/test/RegAssigUnormal.csv")bina
 
-ctoOut <- args[9]
-saveRDS(cisTopicObject, file=ctoOut)
-#saveRDS(cisTopicObject, file="/storage/mathelierarea/processed/petear/analysis/test/cto.rds")
 
+
+##########################################################################################
 library(ComplexHeatmap)
 #Create empty dataframe:
-df <- data.frame(matrix(ncol=2, nrow=1))
-colnames(df) <- c("chrPos","TopicX")
+dfN <- data.frame(matrix(ncol=2, nrow=1))
+colnames(dfN) <- c("chrPos","TopicX")
 
 #merge dataframes
 for (attr in attributes(cisTopicObject@binarized.cisTopics)$names)
 {
     makeDF <- data.frame(cisTopicObject@binarized.cisTopics[attr])
     rowColDF <- tibble::rownames_to_column(makeDF, "chrPos")
-    df <- merge(df, rowColDF, by="chrPos", all=TRUE)
+    dfN <- merge(dfN, rowColDF, by="chrPos", all=TRUE)
 }
-df$TopicX <- NULL
+dfN$TopicX <- NULL
 
 binaOut <- args[10]
-write.csv(df, file=binaOut)
-#write.csv(df, file="/storage/mathelierarea/processed/petear/analysis/test/bina.csv")
+write.csv(dfN, file=binaOut)
+#write.csv(dfN, file="/storage/mathelierarea/processed/petear/analysis/test/bina.csv")
 
 metaOut <- args[11]
 write.csv(meta, file=metaOut)
@@ -436,10 +443,10 @@ hmatOut <- write.csv(hmat, file=hmatOut)
  
 thamat = t(hmat)                #Transpose hmat because complexHeatmaps k-means clustering (which I have to use for getting cluster assignments) only works on rows.
 
-HM <- Heatmap(thamat, km=4)     #Draw a heatmap with km clusters.
-HM <- draw(HM)                  #Show the heatmap
-r.dend <- row_dend(HM)
-rcl.list <- row_order(HM)
+het <- Heatmap(thamat, km=4)     #Draw a heatmap with km clusters.
+#HM <- draw(HM)                  #Show the heatmap
+r.dend <- row_dend(het)
+rcl.list <- row_order(het)
 
 library(magrittr)           #Probably not needed            
 
@@ -469,7 +476,7 @@ row.names(hmat) <- 1 : nrow(hmat)
 
 
 rowOrder <- hclust(dist(hmat))$order
-colOrder <- cutree(hclust(dist(t(hmat))))
+colOrder <- cutree(hclust(dist(t(hmat))),k = 1:5)
 
 hmat <- hmat[rowOrder, colOrder]
 
@@ -477,10 +484,10 @@ thamat = t(hmat)                #Transpose hmat because complexHeatmaps k-means 
 
 pdf("hmClus5.pdf", height=15, width=10)
 
-HM <- Heatmap(thamat)     #Draw a heatmap with km clusters.
-HM <- draw(HM)                  #Show the heatmap
-r.dend <- row_dend(HM)
-rcl.list <- row_order(HM)
+Het <- Heatmap(thamat)     #Draw a heatmap with km clusters.
+Het <- draw(Het)                  #Show the heatmap
+r.dend <- row_dend(Het)
+rcl.list <- row_order(Het)
 
 
 dev.off()
