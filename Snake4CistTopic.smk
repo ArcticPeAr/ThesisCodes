@@ -28,10 +28,6 @@ rule FromRawToCis:
         methTable2feather = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/MethylTable_{project}_{tfactor}.feather",
         pdfpdf = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/{project}_{tfactor}.pdf",
         ctoOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/CTO_{project}_{tfactor}.rds",
-        topicAssigToPatientOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/topicAssigToPatient_{project}_{tfactor}.rds",
-        RegScrPrtopicOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/RegScrPrtopic_{project}_{tfactor}.rds",
-        RegAssigUnormalOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/RegAssigUnormal_{project}_{tfactor}.rds",
-        binaOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/bina_{project}_{tfactor}.rds"
     params:
         string = "{project}",
         pdfName = "{project}_{tfactor}"
