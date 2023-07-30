@@ -13,7 +13,7 @@ print(TFACTOR)
 ############################################################################
 rule all:
     input:
-        expand("/media/veracrypt10/Biotin/CistopicDir/Output/{project}/MethylTable_{project}_{tfactor}.csv.xz", project=PROJECT, tfactor=TFACTOR), \
+        expand("/media/veracrypt10/Biotin/CistopicDir/Output/{project}/MethylTable_{project}_{tfactor}.feather", project=PROJECT, tfactor=TFACTOR), \
         expand("/media/veracrypt10/Biotin/CistopicDir/Output/{project}/{project}_{tfactor}_universe.bed", project=PROJECT, tfactor=TFACTOR), \
         expand("/media/veracrypt10/Biotin/CistopicDir/Output/{project}/Complete_{project}_{tfactor}.pdf", project=PROJECT, tfactor=TFACTOR)
 
@@ -25,19 +25,20 @@ rule FromRawToCis:
         coords = "/media/veracrypt10/Biotin/CistopicDir/{project}_{tfactor}.bed.hg19.wgEncodeHaibMethyl450CpgIslandDetails_emap.probes.bed",
         premeta = "/media/veracrypt10/Biotin/CistopicDir/Meta/sampleinfo_TCGA_RNA_seq_cluster.txt"
     output:
-        methTable2GZ = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/MethylTable_{project}_{tfactor}.csv.xz",
+        methTable2feather = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/MethylTable_{project}_{tfactor}.feather",
         pdfpdf = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/{project}_{tfactor}.pdf",
         ctoOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/CTO_{project}_{tfactor}.rds",
-        topicAssigToPatientOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/topicAssigToPatient_{project}_{tfactor}.csv",
-        RegScrPrtopicOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/RegScrPrtopic_{project}_{tfactor}.csv",
-        RegAssigUnormalOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/RegAssigUnormal_{project}_{tfactor}.csv",
-        binaOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/bina_{project}_{tfactor}.csv",
+        topicAssigToPatientOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/topicAssigToPatient_{project}_{tfactor}.rds",
+        RegScrPrtopicOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/RegScrPrtopic_{project}_{tfactor}.rds",
+        RegAssigUnormalOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/RegAssigUnormal_{project}_{tfactor}.rds",
+        binaOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/bina_{project}_{tfactor}.rds"
     params:
-        string = "{project}"
+        string = "{project}",
+        pdfName = "{project}_{tfactor}"
     threads: workflow.cores
-    shell:
-        "Rscript CisTopic.R {threads} {params.string} {input.CpG} {input.coords} {input.premeta} {output.methTable2GZ} {output.pdfpdf} {output.topicAssigToPatientOut} {output.RegScrPrtopicOut} {output.RegAssigUnormalOut} {output.ctoOut} {output.binaOut}"
-
+    script:
+        "PrepAndCistopic.R"
+         
 #Use Indepentent Component Analysis for decomposing the data into independent components. This can reveal hidden structures or patterns that are not apparent in original data
 rule fICA:
     input:
@@ -47,7 +48,7 @@ rule fICA:
     priority:
         100
     shell:
-        "Rscript fICA.R {input.ctoIn} {output.fICAPDF}"
+        "Rscript ICA.R {input.ctoIn} {output.fICAPDF}"
 
 #Dimensionality reduction with UMAP
 rule UMAP: 
@@ -96,16 +97,6 @@ rule probeHeatmap:
         "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/PrbTpcScrHeatmap_{project}_{tfactor}.pdf"
     shell:
         "Rscript Heatmap.R {input} {output}" 
-
-
-#CSVs can be big so this rule compresses the CSV to XZ to save space.
-rule MethTabl_CSVtoXZ:
-    input:
-        CSV = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/MethylTable_{project}_{tfactor}.csv"
-    output:
-        XZ = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/MethylTable_{project}_{tfactor}.csv.xz"
-    shell:
-        "xz --threads=0 -9v {input.CSV}"
 
 
 #Make outputfolder and add variable number of bedfiles there:
