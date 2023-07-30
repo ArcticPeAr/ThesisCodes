@@ -1,38 +1,28 @@
-#Load data from command line in snakemake
-args <- commandArgs(trailingOnly = TRUE)
-
-
 #To impute missing values in the data amelia is used
 library("Amelia")
 library("tidyverse")
 library("readODS")
+library("feather")
 
-argCounter =1
-
-NumberOfCores = args[argCounter]
-NumberOfCores = as.integer(NumberOfCores)
-argCounter = argCounter + 1
+NumberOfCores = as.integer(snakemake@threads)
 cat("\n","NumberOfCores: ", NumberOfCores, "\n")
 
 
 #String for the BRCA - loop
-whichLoopString <- args[argCounter]
-argCounter = argCounter + 1
-
-cat (" Sample: ", whichLoopString, "\n")
+sampleString <- snakemake@params$string
+sampleString <- as.character(sampleString)
+cat (" Sample: ", sampleString, "\n")
 #Number of cores to be used
 
 #The methylation table
-CpG <- args[argCounter]
-argCounter = argCounter + 1
+CpG <- snakemake@input[["CpG"]]
+
 
 
 #The coordinates of the CpGs with respect to the patients
-coords <- args[argCounter]
-argCounter = argCounter + 1
+coords <- snakemake@input[["coords"]]
 #metadata of the patients. Needs to be ordered
-premeta <- args[argCounter]
-argCounter = argCounter + 1
+premeta <- snakemake@input[["premeta"]]
 
 
 #methTable <- read.table(CpG, header=TRUE, sep="\t")
@@ -98,7 +88,7 @@ rownames(methTable2) <- methTable[,1]
 cat("Metadata is being prepared\n")
 samplemeta <- read.table(premeta, header=TRUE, sep="\t")
 
-if (whichLoopString == "BRCA-US")
+if (sampleString == "BRCA-US")
 {
 metaframe <- samplemeta %>% select(donor_id, PAM50, ER.Status, PAM50_genefu, PR.Status, HER2.Final.Status)
 
@@ -167,10 +157,9 @@ rm(metaframe)
 rm(metaSD)
 
 
-methTable2ods <- args[argCounter]
-argCounter = argCounter + 1
+methTable2ods <- snakemake@output[["methTable2feather"]]
 #save the methTable2 as odt (because of ods has a more compact storage than csv)
-write_ods(methTable2, "methTable2.ods")
+write_feather(methTable2, "methTable2.feather")
 
 ######################################################################################
 #CISTOPIC
@@ -178,10 +167,10 @@ write_ods(methTable2, "methTable2.ods")
 suppressWarnings(library("cisTopic"))
 
 #Name the PDF after what cancer type and TF:
-pdfpdf <- args[argCounter]
-argCounter = argCounter + 1
-PDFName <- pdfpdf
+pdfpdf <- snakemake@output[["pdfpdf"]]
+pdfName <- snakemake@params$pdfString
 
+PDFName <- pdfpdf
 
 cisTopicObject <- createcisTopicObject(is.acc=0.5, min.cells=0, min.regions=0, count.matrix=data.frame(methTable2)) #Set is.acc=0 or is.acc=0.01 | min.cells=0, min.regions=0
 
@@ -193,27 +182,27 @@ pdf(PDFName, height=10, width=15)
 cisTopicObject <- selectModel(cisTopicObject, type='perplexity')
 cat("Model selected\n")
 
-ctoOut <- args[argCounter]
-argCounter = argCounter + 1
+ctoOut <- snakemake@output[["ctoOut"]]
 saveRDS(cisTopicObject, file=ctoOut)
+cat("cisTopicObject saved\n")
 
-topicAssigToPatientOut <- args[argCounter]
-argCounter = argCounter + 1
-#### Write out topic assignments to the patients
-write_ods(cisTopicObject@selected.model$document_expects, topicAssigToPatientOut)
+# topicAssigToPatientOut <- snakemake@output[["topicAssigToPatientOut"]]
+# #### Write out topic assignments to the patients
+# saveRDS(cisTopicObject@selected.model$document_expects, topicAssigToPatientOut)
 
-RegScrPrtopicOut <- args[argCounter]
-argCounter = argCounter + 1
-write_ods(cisTopicObject@region.data, RegScrPrtopicOut)
-#write.xlsx(cisTopicObject@region.data, file="/storage/mathelierarea/processed/petear/analysis/test/RegScrPrtopic.csv")
+# RegScrPrtopicOut <- snakemake@output[["RegScrPrtopicOut"]]
+# saveRDS(cisTopicObject@region.data, RegScrPrtopicOut)
 
-#### Unnormalized region assignments
-RegAssigUnormalOut <- args[argCounter]
-argCounter = argCounter + 1
-write_ods(cisTopicObject@selected.model$topics, RegAssigUnormalOut)
+# #### Unnormalized region assignments
+# RegAssigUnormalOut <- snakemake@output[["RegAssigUnormalOut"]]
+# saveRDS(cisTopicObject@selected.model$topics, RegAssigUnormalOut)
 
-#### Binarized region assignments
-binaOut <- args[argCounter]
-bina <- binarizecisTopics(cisTopicObject, thrP=0.975, plot=TRUE)
-write_ods(bina, binaOut)
- 
+# #### Binarized region assignments
+# bina <- cisTopicObject <- runUmap(cisTopicObject, target ='cell')
+# bina <- binarizecisTopics(binaObject, thrP=0.975, plot=TRUE)
+
+# binaOut <- snakemake@output[["binaOut"]]
+# binaObject <- getRegionsScores(cisTopicObject, method = "Z-score", scaled = TRUE)
+# saveRDS(bina, binaOut)
+
+dev.off()
