@@ -25,9 +25,9 @@ rule FromRawToCis:
         coords = "/media/veracrypt10/Biotin/CistopicDir/{project}_{tfactor}.bed.hg19.wgEncodeHaibMethyl450CpgIslandDetails_emap.probes.bed",
         premeta = "/media/veracrypt10/Biotin/CistopicDir/Meta/sampleinfo_TCGA_RNA_seq_cluster.txt"
     output:
-        methTable2feather = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/MethylTable_{project}_{tfactor}.feather",
+        methTable2feather = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/MethylTable_{project}_{tfactor}.rds",
         pdfpdf = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/{project}_{tfactor}.pdf",
-        ctoOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/CTO_{project}_{tfactor}.rds",
+        ctoOut = "/media/veracrypt10/Biotin/CistopicDir/Output/{project}/CTO_{project}_{tfactor}.rds"
     params:
         string = "{project}",
         pdfName = "{project}_{tfactor}"
