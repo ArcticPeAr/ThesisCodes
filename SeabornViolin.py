@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 import lzma
-import sys
+import pyreadr
 #####
 
 
@@ -18,14 +18,19 @@ regScrPrtopic = pd.read_csv("RegScrPrtopic_BRCA-US_FULL.csv", delimiter=",")
 topicAssigToPatient = pd.read_csv("topicAssigToPatient_BRCA-US_FULL.csv", delimiter=",")
 
 """
-methTable = sys.argv[1]
-regScrNorm = sys.argv[2]
-regScrUnrm = sys.argv[3]
-topicAssig = sys.argv[4]
+methTable = snakemake.input["methTable2rds"]
+regScrNorm = snakemake.input["RegScrPrtopicOut"]
+regScrUnrm = snakemake.input["RegAssigUnormalOut"]
+topicAssig = snakemake.input["topicAssigToPatientOut"]
 
-methTable = pd.read_csv(methTable, delimiter=",")
+#read RDS in python 
+result = pyreadr.read_r(methTable) 
+methTable = list(result.values())[0]
+
 regScrPrtopic = pd.read_csv(regScrNorm, delimiter=",")
+
 regAssigUnormal = pd.read_csv(regScrUnrm, delimiter=",")
+
 topicAssigToPatient = pd.read_csv(topicAssig, delimiter=",")
 
 
