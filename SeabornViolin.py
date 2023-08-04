@@ -28,6 +28,7 @@ regScrPrtopic = pd.read_csv(regScrNorm, delimiter=",")
 regAssigUnormal = pd.read_csv(regScrUnrm, delimiter=",")
 topicAssigToPatient = pd.read_csv(topicAssig, delimiter=",")
 
+
 ####################################
 
 
