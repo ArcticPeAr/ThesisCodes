@@ -11,6 +11,13 @@ import pyreadr
 
 
 ####Read tables#######################
+"""
+methTable = pd.read_csv("MethylTable_BRCA-US_FULL.csv.xz", delimiter=",", compression="xz")
+regAssigUnormal = pd.read_csv("RegAssigUnormal_BRCA-US_FULL.csv", delimiter=",")
+regScrPrtopic = pd.read_csv("RegScrPrtopic_BRCA-US_FULL.csv", delimiter=",")
+topicAssigToPatient = pd.read_csv("topicAssigToPatient_BRCA-US_FULL.csv", delimiter=",")
+
+"""
 methTable = snakemake.input["methTable2rds"]
 regScrNorm = snakemake.input["RegScrPrtopicOut"]
 regScrUnrm = snakemake.input["RegAssigUnormalOut"]
