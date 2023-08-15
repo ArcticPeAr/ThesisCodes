@@ -156,17 +156,16 @@ rm(samplemeta)
 rm(metaframe)
 rm(metaSD)
 
-
-methTable2ods <- snakemake@output[["methTable2feather"]]
+methTable2rds <- snakemake@output[["methTable2rds"]]
 #save the methTable2 as odt (because of ods has a more compact storage than csv)
-write_feather(methTable2, "methTable2.feather")
+saveRDS(methTable2, methTable2rds)
 
 ######################################################################################
 #CISTOPIC
 ######################################################################################
 suppressWarnings(library("cisTopic"))
 
-#Name the PDF after what cancer type and TF:
+# Name the PDF after what cancer type and TF:
 pdfpdf <- snakemake@output[["pdfpdf"]]
 pdfName <- snakemake@params$pdfString
 
@@ -186,23 +185,27 @@ ctoOut <- snakemake@output[["ctoOut"]]
 saveRDS(cisTopicObject, file=ctoOut)
 cat("cisTopicObject saved\n")
 
-# topicAssigToPatientOut <- snakemake@output[["topicAssigToPatientOut"]]
-# #### Write out topic assignments to the patients
-# saveRDS(cisTopicObject@selected.model$document_expects, topicAssigToPatientOut)
+topicAssigToPatientOut <- snakemake@output[["topicAssigToPatientOut"]]
+#### Write out topic assignments to binaObjectthe patients
+saveRDS(cisTopicObject@selected.model$document_expects, topicAssigToPatientOut)
 
-# RegScrPrtopicOut <- snakemake@output[["RegScrPrtopicOut"]]
-# saveRDS(cisTopicObject@region.data, RegScrPrtopicOut)
+cisTopicObject <- runUmap(cisTopicObject, target='cell', seed=123, method='Probability')
 
-# #### Unnormalized region assignments
-# RegAssigUnormalOut <- snakemake@output[["RegAssigUnormalOut"]]
-# saveRDS(cisTopicObject@selected.model$topics, RegAssigUnormalOut)
+# Unnormalized region assignments
+RegAssigUnormalOut <- snakemake@output[["RegAssigUnormalOut"]]
+saveRDS(cisTopicObject@selected.model$topics, RegAssigUnormalOut)
 
-# #### Binarized region assignments
-# bina <- cisTopicObject <- runUmap(cisTopicObject, target ='cell')
-# bina <- binarizecisTopics(binaObject, thrP=0.975, plot=TRUE)
+RegScrPrtopicOut <- snakemake@output[["RegScrPrtopicOut"]]
+saveRDS(cisTopicObject@region.data, RegScrPrtopicOut)
 
-# binaOut <- snakemake@output[["binaOut"]]
-# binaObject <- getRegionsScores(cisTopicObject, method = "Z-score", scaled = TRUE)
-# saveRDS(bina, binaOut)
+# Normalized region assignments
+cisTopicObject <- getRegionsScores(cisTopicObject, method = "NormTop", scaled = TRUE)
+
+# Binarized region assignments
+cisTopicObject <- binarizecisTopics(cisTopicObject, thrP=0.975, plot=TRUE)
+
+binaOut <- snakemake@output[["binaOut"]]
+
+saveRDS(cisTopicObject, binaOut)
 
 dev.off()
