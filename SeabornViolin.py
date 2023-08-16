@@ -1,14 +1,12 @@
 """
 The methylation level of CpGs in the topics, you could plot the complete distribution of values for a given set of patients associated with the corresponding topic and compare to other CpGs in the other topics. For instance, using violin plots with strips
 """
-from matplotlib.backends.backend_pdf import PdfPages
-import matplotlib.pyplot as plt
-import seaborn as sns
-import pandas as pd
-import lzma
-import pyreadr
+    from matplotlib.backends.backend_pdf import PdfPages
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    import pandas as pd
+    import pyreadr
 #####
-
 
 ####Read tables#######################
 methTable = snakemake.input["methTable2rds"]
@@ -17,15 +15,20 @@ regScrUnrm = snakemake.input["RegAssigUnormalOut"]
 topicAssig = snakemake.input["topicAssigToPatientOut"]
 
 #read RDS in python 
-result = pyreadr.read_r(methTable) 
-methTable = list(result.values())[0]
+RDSreadMT = pyreadr.read_r(methTable) 
+methTable = list(RDSreadMT.values())[0]
+methTable.index.names = [None]
 
-regScrPrtopic = pd.read_csv(regScrNorm, delimiter=",")
+#read RDS in python
+#remove rownames 
+RDSreadRSPT = pyreadr.read_r(regScrNorm)
+regScrPrtopic = list(RDSreadRSPT.values())[0]
 
-regAssigUnormal = pd.read_csv(regScrUnrm, delimiter=",")
+RDSreadRSU = pyreadr.read_r(regScrUnrm)
+regAssigUnormal = list(RDSreadRSU.values())[0]
 
-topicAssigToPatient = pd.read_csv(topicAssig, delimiter=",")
-
+RDSreadTA = pyreadr.read_r(topicAssig)
+topicAssigToPatient = list(RDSreadTA.values())[0]
 
 ####################################
 
@@ -33,14 +36,13 @@ topicAssigToPatient = pd.read_csv(topicAssig, delimiter=",")
 """
 Following to find the donors that have the highest topic assignment:
 """
-#Remove unnamed column with topic numbers and set those as rownames
-topicAsPatRownames = topicAssigToPatient.set_index("Unnamed: 0")
-topicAsPatRownames.index.names = [None]
-#topicAsPatRownames["mean"] = topicAsPatRownames.mean(axis=1)
+#set row as index
+topicAssigToPatient["index"] = range(1, len(topicAssigToPatient) + 1)
+topicAssigToPatient.set_index('index', inplace=True)
 
 #subract mean of each 
 topicPatMean = topicAsPatRownames.sub(topicAsPatRownames.mean(axis=1), axis=0)
-	
+
 #topicAbsMean = topicAbsMean.abs()
 
 
