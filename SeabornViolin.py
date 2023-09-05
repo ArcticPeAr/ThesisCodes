@@ -1,103 +1,67 @@
 """
 The methylation level of CpGs in the topics, you could plot the complete distribution of values for a given set of patients associated with the corresponding topic and compare to other CpGs in the other topics. For instance, using violin plots with strips
 """
-    from matplotlib.backends.backend_pdf import PdfPages
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    import pandas as pd
-    import pyreadr
+from matplotlib.backends.backend_pdf import PdfPages
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+import pyreadr
 #####
 
 ####Read tables#######################
-methTable = snakemake.input["methTable2rds"]
-regScrNorm = snakemake.input["RegScrPrtopicOut"]
-regScrUnrm = snakemake.input["RegAssigUnormalOut"]
-topicAssig = snakemake.input["topicAssigToPatientOut"]
+meth_table = snakemake.input["methTable2rds"]
+reg_scr_norm = snakemake.input["RegScrPrtopicOut"]
+reg_scr_unrm = snakemake.input["RegAssigUnormalOut"]
+topic_assig = snakemake.input["topicAssigToPatientOut"]
 
-#read RDS in python 
-RDSreadMT = pyreadr.read_r(methTable) 
-methTable = list(RDSreadMT.values())[0]
-methTable.index.names = [None]
+# read RDS from R into Python
+rds_read_mt = pyreadr.read_r(meth_table) 
+meth_table = list(rds_read_mt.values())[0]
+meth_table.index.names = [None]
 
-#read RDS in python
-#remove rownames 
-RDSreadRSPT = pyreadr.read_r(regScrNorm)
-regScrPrtopic = list(RDSreadRSPT.values())[0]
+# read RDS in python
+# remove rownames 
+rds_read_rspt = pyreadr.read_r(reg_scr_norm)
+reg_scr_prtopic = list(rds_read_rspt.values())[0]
 
-RDSreadRSU = pyreadr.read_r(regScrUnrm)
-regAssigUnormal = list(RDSreadRSU.values())[0]
+rds_read_rsu = pyreadr.read_r(reg_scr_unrm)
+reg_assig_unormal = list(rds_read_rsu.values())[0]
 
-RDSreadTA = pyreadr.read_r(topicAssig)
-topicAssigToPatient = list(RDSreadTA.values())[0]
+rds_read_ta = pyreadr.read_r(topic_assig)
+topic_assig_to_patient = list(rds_read_ta.values())[0]
 
 ####################################
-
 
 """
 Following to find the donors that have the highest topic assignment:
 """
-#set row as index
-topicAssigToPatient["index"] = range(1, len(topicAssigToPatient) + 1)
-topicAssigToPatient.set_index('index', inplace=True)
+# set row as index
+topic_assig_to_patient["index"] = range(1, len(topic_assig_to_patient) + 1)
+topic_assig_to_patient.set_index('index', inplace=True)
 
-#subract mean of each 
-topicPatMean = topicAsPatRownames.sub(topicAsPatRownames.mean(axis=1), axis=0)
+# Find number of topics 
+tpc_no = len(topic_assig_to_patient)
 
-#topicAbsMean = topicAbsMean.abs()
-
-
-#Make dictionary-class .
-class topDict(dict):
-	def __init__(self):
-		self = dict()
-	def add(self, col, row):
-		self[col] = row	
-
-
-
-
-
-# Make a list of column names
-colList = list(topicPatMean)
-
-
-
-topicPatDict = topDict()
-
-#Add key (patientID) with n topics (as values), after subtracting mean of that topic - this because it can find the topics contributing most for that patient compared to other topics.
-for item in colList:
-	topicPatDict.col = item
-	patient = topicPatMean[item]
-	topicPatDict.row = patient.nlargest(4)
-	topicPatDict.add(topicPatDict.col, list(topicPatDict.row.index))
-
-
-
-
-
-#Find number of topics 
-tpcNo = len(topicAssigToPatient)
-
-#Make lists for each topic, named topic_ + topic number 
 nr = 0
+topics_dict = {}
 
-while nr < tpcNo: 
-	nr = nr + 1
-	locals()[f"Topic_{str(nr)}"] = []
-	
+for nr in range(1, tpc_no + 1):
+    topics_dict[f"Topic_{nr}"] = []
+    
+# Make list with Topic_X as name of list (x = topic number) and patients as items where the patients had that topic as highest contributing topic. This will cluster patients that has the same "highest contributing topic" together
+transposed_df = topic_assig_to_patient.transpose()
 
-#number of topics and add 1 because this is used for setting columns to be worked on on following for loop. (First column is region: "Unnamed: 0")
-tcpNoPlus1 = tpcNo+1
-
-#Make list with Topic_X as name of list (x = topic number) and patients as items where the patients had that topic as highest contributing topic. This will cluster patients that has the same "highest contributing topic" together
-for key, value in topicPatDict.items():
-    for n in range(1,tcpNoPlus1,1):
-        if n in value:
-            locals()[f"Topic_{str(n)}"].append(key)
-
+# Iterate through the transposed DataFrame
+for patient, row in transposed_df.iterrows():
+    # Identify the topic with the maximum value
+    highest_contrib_topic = row.idxmax()
+    topic_number = highest_contrib_topic + 1  # Adding 1 because the index starts from 0
+    # Append the patient to the corresponding list in the topics_dict
+    topics_dict[f"Topic_{topic_number}"].append(patient)
 
 
-"""
+    
+""" 
 Following to find regions most contributing to a topic
 """
 #Set region as rownumber methTable and drop the column. Also make regTable as DF with only region as column so that columns from topics in next while-loop can be added
@@ -147,7 +111,9 @@ for key in LookupDict.keys():
 
 
 
-
+#####################################################################################
+#SNS
+#####################################################################################
 
 
 nr = 0
@@ -182,4 +148,47 @@ for column in dRTSansUn.columns:
 	name=column+".png"
 	fig.savefig(name)
 	plt.clf()
+
+#Topics on x-axis
+import pandas as pd
+
+melted_df = topicAssigToPatient.reset_index().melt(id_vars="index", 
+                                                   value_vars=topicAssigToPatient.columns, 
+                                                   var_name="Patient", 
+                                                   value_name="Value")
+melted_df.rename(columns={"index": "Topic"}, inplace=True)
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(15,10))
+sns.violinplot(x="Topic", y="Value", data=melted_df)
+plt.title("Distribution of Topic Assignments Across Patients")
+plt.xticks(rotation=90)
+plt.tight_layout()
+plt.show()
+
+#Patients on x-axis
+
+
+melted_df = topicAssigToPatient.reset_index().melt(id_vars="index", 
+                                                   value_vars=topicAssigToPatient.columns, 
+                                                   var_name="Patient", 
+                                                   value_name="Value")
+melted_df.rename(columns={"index": "Topic"}, inplace=True)
+
+plt.figure(figsize=(20,10))
+sns.violinplot(x="Patient", y="Value", hue="Topic", data=melted_df, inner="quartile")
+plt.title("Distribution of Topic Assignments for Each Patient")
+plt.xticks(rotation=90)
+plt.tight_layout()
+plt.legend(title='Topic', bbox_to_anchor=(1.05, 1), loc='upper left')
+plt.show()
+
+plt.figure(figsize=(20,10))
+sns.violinplot(x="Patient", y="Value", data=melted_df, inner="quartile", scale="width")
+plt.title("Distribution of Topic Assignments for Each Patient")
+plt.xticks(rotation=90)
+plt.tight_layout()
+plt.show()
 
