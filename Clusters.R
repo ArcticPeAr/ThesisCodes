@@ -1,16 +1,10 @@
 library(ComplexHeatmap)
 suppressWarnings(library("cisTopic"))
 
-args <- commandArgs(trailingOnly = TRUE)
-argCounter = 1
-#Read in bina
-#bina <- args[1]
-
-
 
 #read in CTO 
-cto <- readRDS(args[argCounter])
-argCounter = argCounter + 1
+cto <- readRDS(snakemake@input[["ctoIn"]])
+
 
 hmat <- scale(cto@selected.model$document_expects, center=TRUE, scale=TRUE)
 row.names(hmat) <- 1 : nrow(hmat)
@@ -21,12 +15,10 @@ hmat <- hmat[rowOrder, colOrder]
 thamat = t(hmat)                #Transpose hmat because complexHeatmaps k-means clustering (which I have to use for getting cluster assignments) only works on rows.
 
 
-ClusteredHeatmapsPDF <- args[argCounter]
-argCounter = argCounter + 1
+ClusteredHeatmapsPDF <- snakemake@output[["clusterPDF"]]
 
-pdfNameUMAP <- ClusteredHeatmapsPDF
 
-pdf(pdfNameUMAP, width=10, height=10)
+pdf(ClusteredHeatmapsPDF, width=10, height=10)
 i = 1
 while ( i < 10) 
 {
