@@ -185,10 +185,6 @@ ctoOut <- snakemake@output[["ctoOut"]]
 saveRDS(cisTopicObject, file = ctoOut)
 cat("cisTopicObject saved\n")
 
-topicAssigToPatientOut <- snakemake@output[["topicAssigToPatientOut"]]
-#### Write out topic assignments to binaObjectthe patients
-saveRDS(cisTopicObject@selected.model$document_expects, topicAssigToPatientOut)
-
 cisTopicObject <- runUmap(cisTopicObject, target='cell', seed=123, method='Probability')
 
 # Unnormalized region assignments

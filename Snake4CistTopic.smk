@@ -28,10 +28,11 @@ rule FromRawToCis:
         methTable2rds = "/home/petear/Biotin/CistopicDir/Output/{project}/MethylTable_{project}_{tfactor}.rds",
         pdfpdf = "/home/petear/Biotin/CistopicDir/Output/{project}/{project}_{tfactor}.pdf",
         ctoOut = "/home/petear/Biotin/CistopicDir/Output/{project}/CTO_{project}_{tfactor}.rds",
-        topicAssigToPatientOut = "/home/petear/Biotin/CistopicDir/Output/{project}/topicAssigToPatient_{project}_{tfactor}.rds",
         RegAssigUnormalOut = "/home/petear/Biotin/CistopicDir/Output/{project}/RegAssigUnormal_{project}_{tfactor}.rds",
         RegScrPrtopicOut = "/home/petear/Biotin/CistopicDir/Output/{project}/RegScrPrtopic_{project}_{tfactor}.rds",
-        binaOut = "/home/petear/Biotin/CistopicDir/Output/{project}/bina_{project}_{tfactor}.rds"
+        binaOut = "/home/petear/Biotin/CistopicDir/Output/{project}/bina_{project}_{tfactor}.rds",
+        cellModelMatOut = "/home/petear/Biotin/CistopicDir/Output/{project}/cellModelMat_{project}_{tfactor}.rds",
+        regionModelMatOut = "/home/petear/Biotin/CistopicDir/Output/{project}/regionModelMatOut_{project}_{tfactor}.rds"
     params:
         string = "{project}",
         pdfName = "{project}_{tfactor}"
