@@ -149,7 +149,7 @@ MTList <- colnames(methTable2)
 meta <- meta[row.names(meta) %in% MTList, ]
 
 
-#free memory:
+#free up memory:
 rm(methTable)
 rm(Coords)
 rm(samplemeta)
@@ -182,7 +182,7 @@ cisTopicObject <- selectModel(cisTopicObject, type='perplexity')
 cat("Model selected\n")
 
 ctoOut <- snakemake@output[["ctoOut"]]
-saveRDS(cisTopicObject, file=ctoOut)
+saveRDS(cisTopicObject, file = ctoOut)
 cat("cisTopicObject saved\n")
 
 topicAssigToPatientOut <- snakemake@output[["topicAssigToPatientOut"]]
@@ -205,7 +205,15 @@ cisTopicObject <- getRegionsScores(cisTopicObject, method = "NormTop", scaled = 
 cisTopicObject <- binarizecisTopics(cisTopicObject, thrP=0.975, plot=TRUE)
 
 binaOut <- snakemake@output[["binaOut"]]
+saveRDS(cisTopicObject, file = binaOut)
 
-saveRDS(cisTopicObject, binaOut)
+cellModelMat <- modelMatSelection(cisTopicObject, 'cell', 'Probability')
+cellModelMatOut <- snakemake@output[["cellModelMatOut"]]
+saveRDS(cellModelMat, file = cellModelMatOut)
+
+methylationModelMat <- modelMatSelection(cisTopicObject, 'region', 'Probability')
+methylationModelMatOut <- snakemake@output[["methylationModelMatOut"]]
+saveRDS(methylationModelMat, file = methylationModelMatOut) 
+
 
 dev.off()
