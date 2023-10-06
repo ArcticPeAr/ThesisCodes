@@ -6,73 +6,271 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 import pyreadr
-#####
 
-####Read tables#######################
-meth_table = snakemake.input["methTable2rds"]
-reg_scr_norm = snakemake.input["RegScrPrtopicOut"]
-reg_scr_unrm = snakemake.input["RegAssigUnormalOut"]
-topic_assig = snakemake.input["topicAssigToPatientOut"]
+######################################################################################################
+#### Define functions
+######################################################################################################
+def read_rds(file_path):
+    """
+    Reads an RDS file and returns it as a DataFrame.
+    
+    Parameters:
+        file_path (str): The path to the RDS file.
+    
+    Returns:
+        pd.DataFrame: The DataFrame containing the data.
+    """
+    rds_data = pyreadr.read_r(file_path)
+    return list(rds_data.values())[0]
 
-# read RDS from R into Python
-rds_read_mt = pyreadr.read_r(meth_table) 
-meth_table = list(rds_read_mt.values())[0]
+
+
+def get_topic_patient_dict(df):
+    """
+    Creates a dictionary where keys are the topics and the values are lists of patients 
+    that have that corresponding topic as their highest contributing topic.
+    
+    Parameters:
+        df (pd.DataFrame): DataFrame containing topic assignment for patients.
+        
+    Returns:
+        dict: Dictionary with topics as keys and list of patients as values.
+    """
+    
+    topics_dict = {f"Topic_{i+1}": [] for i in range(len(df))}
+    
+    for col in df:
+        # Get the topic number that the patient (column) has the highest score for
+        topic_number = df[col].idxmax()
+        topic_label = f"Topic_{topic_number + 1}"
+        
+        # Append the patient to the list of patients for the topic they score highest on
+        topics_dict[topic_label].append(col)
+        
+    return topics_dict
+
+
+
+def remove_empty_lists_from_dict(input_dict):
+    """
+    Removes keys that have empty lists as values from the dictionary.
+    
+    Parameters:
+        input_dict (dict): The input dictionary.
+        
+    Returns:
+        dict: The dictionary with keys having empty lists removed.
+    """
+    return {k: v for k, v in input_dict.items() if v}
+
+
+
+def collect_values_from_dict_values(dict_values, df):
+    """
+    Collects values from a DataFrame based on the values in a dictionary.
+
+    Parameters:
+        dict_values (dict): The dictionary containing column names as values in lists.
+        df (pd.DataFrame): The pandas DataFrame to collect values from.
+
+    Returns:
+        dict: A dictionary with the same keys as dict_values, but with lists of values as values. 
+              Each list contains the values from the corresponding columns in df specified in dict_values, 
+              with the values from different columns concatenated into a single list.
+    """
+    collected_values = {}
+    
+    for key, values in dict_values.items():
+        collected_values[key] = [val for col in values if col in df.columns for val in df[col].tolist()]
+    
+    return collected_values
+
+
+
+def create_violin_plots(data_dict):
+    """
+    Create a series of violin plots from a dictionary of data.
+
+    The function takes a dictionary where keys are topics and values are lists 
+    of servations for that topic. The dictionary 
+    is converted to a pandas DataFrame, then melted to create a long-form 
+    DataFrame, which is used to create the violin plots using Seaborn's 
+    violinplot function.
+
+    Parameters:
+    data_dict (dict): A dictionary where the keys are strings representing 
+                      topic names and the values are lists of numeric values 
+                      representing observations for that topic.
+
+    Returns:
+    None: The function displays a violin plot using matplotlib but does not 
+          return any values.
+
+    Example:
+    data_dict = {"Topic1": [1, 2, 3, 4, 5], "Topic2": [5, 6, 7, 8, 9]}
+    create_violin_plots(data_dict)
+    """
+    # Create a new DataFrame from the dictionary
+    df = pd.DataFrame.from_dict(data_dict, orient='index').transpose()
+    
+    # Melt the DataFrame to create a long-form DataFrame
+    df_melted = df.melt(var_name='Topics', value_name='Values')
+    
+    # Create a violin plot using the long-form DataFrame
+    plt.figure()
+    sns.violinplot(x='Topics', y='Values', data=df_melted)
+    
+    # Set plot title and labels
+    plt.title('Violin plots for all topics')
+    plt.xlabel('Topics')
+    plt.ylabel('Values')
+    
+    # Rotate x labels for better visibility
+    plt.xticks(rotation=90)
+    
+    # Display the plot
+    plt.show()
+
+
+def save_plot_as_pdf(filename):
+    """
+    Save the current plot as a PDF.
+    
+    Parameters:
+        filename (str): The name of the PDF file to save.
+    """
+    plt.savefig(filename, format='pdf', bbox_inches='tight')
+
+
+
+def plot_topic_distribution_violin(df):
+    """
+    Plots a violin plot based on a DataFrame that shows topic distributions across multiple documents.
+    
+    Parameters:
+    - df (pandas.DataFrame): DataFrame where each row corresponds to a topic and each column to a document. 
+                             Cells contain numeric values representing the relevance score of a topic in a document.
+    
+    """
+    melted_df = df.reset_index().melt(id_vars='index', var_name='Document', value_name='Value')
+    plt.figure(figsize=(10, 8))
+    sns.violinplot(x='index', y='Value', data=melted_df)
+    plt.xlabel('Topics')
+    plt.ylabel('Value')
+    plt.title('Topic Distribution with Violin Plot')
+    plt.show()
+
+
+
+def plot_topic_distribution_boxplot(df):
+    """
+    Plots a boxplot based on a DataFrame that shows topic distributions across multiple documents.
+    
+    Parameters:
+    - df (pandas.DataFrame): DataFrame where each row corresponds to a topic and each column to a document. 
+                             Cells contain numeric values representing the relevance score of a topic in a document.
+    
+    Returns:
+    None
+    """
+    melted_df = df.reset_index().melt(id_vars='index', var_name='Document', value_name='Value')
+    plt.figure(figsize=(10, 8))
+    sns.boxplot(x='index', y='Value', data=melted_df)
+    plt.xlabel('Topics')
+    plt.ylabel('Value')
+    plt.title('Topic Distribution with Boxplot')
+    plt.show()
+
+
+
+def plot_topic_distribution_histogram(df):
+    """
+    Plots individual histograms based on a DataFrame that shows topic distributions across multiple documents.
+    
+    Parameters:
+    - df (pandas.DataFrame): DataFrame where each row corresponds to a topic and each column to a document. 
+                             Cells contain numeric values representing the relevance score of a topic in a document.
+    
+    Returns:
+    None
+    """
+    melted_df = df.reset_index().melt(id_vars='index', var_name='Document', value_name='Value')
+    topics = df.index.tolist()
+    
+    n = len(topics)
+    fig, axes = plt.subplots(n, 1, figsize=(10, 6 * n), sharex=True, sharey=True)
+    
+    max_val = df.values.max()
+    
+    for i, topic in enumerate(topics):
+        sns.histplot(melted_df[melted_df['index'] == topic]['Value'], kde=False, ax=axes[i], bins=20)
+        axes[i].set_xlim(0, max_val)
+        axes[i].set_title(f'{topic}   ', loc='right', y=0.15)
+        axes[i].set_ylabel('')  # Remove individual y-axis labels
+    
+    fig.suptitle('Topic Distributions Across Documents', fontsize=16)
+    
+    # Adjust layout to make room for the y-axis label
+    plt.subplots_adjust(left=0.15)
+    
+    # Add a big y-axis label outside the plots
+    fig.text(0.08, 0.5, 'Frequencies', va='center', rotation='vertical', fontsize=14)
+    
+    plt.xlabel('Value')
+    plt.show()
+
+
+######################################################################################################
+#### Load data
+######################################################################################################
+
+meth_table = read_rds(snakemake.input["methTable2rds"])
 meth_table.index.names = [None]
 
-# read RDS in python
-# remove rownames 
-rds_read_rspt = pyreadr.read_r(reg_scr_norm)
-reg_scr_prtopic = list(rds_read_rspt.values())[0]
+reg_scr_prtopic = read_rds(snakemake.input["RegScrPrtopicOut"])
+reg_scr_prtopic.index.names = [None]
 
-rds_read_rsu = pyreadr.read_r(reg_scr_unrm)
-reg_assig_unormal = list(rds_read_rsu.values())[0]
+reg_assig_unormal = read_rds(snakemake.input["RegAssigUnormalOut"])
+reg_assig_unormal.index.names = [None]
 
-rds_read_ta = pyreadr.read_r(topic_assig)
-topic_assig_to_patient = list(rds_read_ta.values())[0]
+cell_model_mat <- read_rds(snakemake.input["cellModelMatOut"]) 
 
-####################################
+region_model_mat <- read_rds(snakemake.input["regionModelMatOut"])
 
-"""
-Following to find the donors that have the highest topic assignment:
-"""
-# set row as index
-topic_assig_to_patient["index"] = range(1, len(topic_assig_to_patient) + 1)
-topic_assig_to_patient.set_index('index', inplace=True)
-
-# Find number of topics 
-tpc_no = len(topic_assig_to_patient)
-
-nr = 0
-topics_dict = {}
-
-for nr in range(1, tpc_no + 1):
-    topics_dict[f"Topic_{nr}"] = []
-    
-# Make list with Topic_X as name of list (x = topic number) and patients as items where the patients had that topic as highest contributing topic. This will cluster patients that has the same "highest contributing topic" together
-transposed_df = topic_assig_to_patient.transpose()
-
-# Iterate through the transposed DataFrame
-for patient, row in transposed_df.iterrows():
-    # Identify the topic with the maximum value
-    highest_contrib_topic = row.idxmax()
-    topic_number = highest_contrib_topic + 1  # Adding 1 because the index starts from 0
-    # Append the patient to the corresponding list in the topics_dict
-    topics_dict[f"Topic_{topic_number}"].append(patient)
+######################################################################################################
+#### Create plots
+######################################################################################################
 
 
-    
-""" 
-Following to find regions most contributing to a topic
-"""
-#Set region as rownumber methTable and drop the column. Also make regTable as DF with only region as column so that columns from topics in next while-loop can be added
-methTabWithRegAsRowname = methTable
-methTabWithRegAsRowname.index = methTable["Unnamed: 0"] 
-methTabWithRegAsRowname.index.names = [None]
 
-regTable = methTabWithRegAsRowname["Unnamed: 0"]
+plot_topic_distribution_histogram(region_model_mat)
+plot_topic_distribution_boxplot(region_model_mat)
 
-methTabWithRegAsRowname = methTabWithRegAsRowname.drop(["Unnamed: 0"], axis=1)
 
+
+
+
+
+
+
+# topics_dict = get_topic_patient_dict(topic_assig_to_patient)
+
+# topics_dict = remove_empty_lists_from_dict(topics_dict)
+
+# meth_table.index.names = [None]
+# topics_dict = collect_values_from_dict_values(topics_dict, meth_table)
+
+# #create violin plots
+# create_violin_plots(topics_dict)
+
+save_plot_as_pdf("violin_plots.pdf")
+
+
+
+
+######################################################################################################
+#### Create plots
+######################################################################################################
 
 ###################################    RegScrPrTopic    #######################################################
 #Remove unneeded columns
@@ -84,6 +282,7 @@ for col in regScrPrTopicDrpd.columns[1:]:
     newDF = regScrPrTopicDrpd[["Unnamed: 0", col]]
     newDF = newDF[newDF[col] > 0.5]
     LookupDict[col] = list(newDF["Unnamed: 0"])
+
 """
 {'Scores_Topic1':                       Unnamed: 0
 								205     chrX:134569361-134569362
