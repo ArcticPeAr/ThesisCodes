@@ -164,6 +164,7 @@ def unibindFunc(wildcards):
                         bednumber = glob_wildcards(os.path.join(checkpoint_output, "Topic_{bednumber}.bed")).bednumber)
     return file_names
 
+
 rule mergeUBPDF:
     input:
         unibindFunc
@@ -171,6 +172,7 @@ rule mergeUBPDF:
         "/home/petear/Biotin/CistopicDir/Output/{project}/UBallEnrichmentsSwarmplot_{project}_{tfactor}.pdf"
     shell:
         "pdfunite {input} {output}"
+
 
 rule mergeCisTPDF:
     input:
@@ -180,6 +182,7 @@ rule mergeCisTPDF:
         "/home/petear/Biotin/CistopicDir/Output/{project}/merged_{project}_{tfactor}.pdf"
     shell:
         "pdfunite {input.cistopicPDF} {input.UBpdf} {output}"
+
 
 rule testFunc:
     input:
@@ -208,6 +211,7 @@ def rGREATFunc(wildcards):
                         bednumber = glob_wildcards(os.path.join(checkpoint_output, "Topic_{bednumber}.bed")).bednumber)
     return file_names
 
+
 #Merge PDFs from rGREAT
 rule MergeGREATPDFs:
     input:
@@ -216,6 +220,7 @@ rule MergeGREATPDFs:
         "/home/petear/Biotin/CistopicDir/Output/{project}/GREAT_merged_{project}_{tfactor}.pdf"
     shell:
         "pdfunite {input} {output}"
+
 
 #Merge all PDFs to make a final PDF with full report and all plots
 rule completePDF:
