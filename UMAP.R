@@ -3,24 +3,14 @@
 ######################################################
 suppressWarnings(library("cisTopic"))
 
-args <- commandArgs(trailingOnly = TRUE)
-#Argcounter is used to keep track of the arguments in case more are added
-argCounter = 1
-
 # Load the data from args
-ctoIn <- args[argCounter]
-argCounter = argCounter + 1
-
-
+ctoIn <- snakemake@input[[ctoIn]]
 cisTopicObject <- readRDS(ctoIn)
 
 
-UmapPDF <- args[argCounter]
-argCounter = argCounter + 1
+UmapPDF <- snakemake@output[["UMAPpdf"]]
 
-pdfNameUmap <- UmapPDF
-
-pdf(pdfNameUmap)
+pdf(UmapPDF)
 
 ###Remove warnings
 oldw <- getOption("warn")

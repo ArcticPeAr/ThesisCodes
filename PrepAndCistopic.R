@@ -208,7 +208,9 @@ cellModelMatOut <- snakemake@output[["cellModelMatOut"]]
 saveRDS(cellModelMat, file = cellModelMatOut)
 
 methylationModelMat <- modelMatSelection(cisTopicObject, 'region', 'Probability')
-methylationModelMatOut <- snakemake@output[["methylationModelMatOut"]]
+methylationModelMatOut <- snakemake@output[["regionModelMatOut"]]
+cat("error")
+cat(methylationModelMatOut)
 saveRDS(methylationModelMat, file = methylationModelMatOut) 
 
 
