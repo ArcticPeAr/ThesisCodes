@@ -1,4 +1,4 @@
-    projectTfDict = {"BRCA-US": ["FULL"]}
+projectTfDict = {"BRCA-US": ["FULL"]}
 
 PROJECT = []
 TFACTOR = []
@@ -121,10 +121,7 @@ rule liftover:
     priority:
         98
     shell:
-        "/home/petear/Documents/liftOverDir/liftOver {input.HG19Bed} /home/petear/Biotin/CistopicDir/hg19ToHg38.over.chain.gz {output.HG38Bed} unMapped"
-
-
-
+        "/home/petear/Biotin/CistopicDir/liftOverDir/liftOver {input.HG19Bed} /home/petear/Biotin/CistopicDir/hg19ToHg38.over.chain.gz {output.HG38Bed} unMapped"
 
 
 #make function to continue to work on sepearate bedfiles
